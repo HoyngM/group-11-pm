@@ -1,0 +1,103 @@
+case:concept:name,concept:name,time:timestamp,org:resource,case:age,case:gender,case:morphology,survival_days,label
+Patient_001,consultation,2022-08-18 15:27:00,MD-01,58,F,intestinal,140,short
+Patient_001,supportive care,2022-09-01 13:55:00,MD-03,58,F,intestinal,140,short
+Patient_001,supportive care,2022-09-22 14:18:00,MD-03,58,F,intestinal,140,short
+Patient_002,consultation,2022-11-11 16:26:00,MD-04,73,M,diffuse,180,short
+Patient_002,capecitabine,2022-11-18 10:33:00,MD-02,73,M,diffuse,180,short
+Patient_002,capecitabine,2022-12-09 14:00:00,MD-01,73,M,diffuse,180,short
+Patient_002,paclitaxel,2022-12-30 14:56:00,MD-01,73,M,diffuse,180,short
+Patient_002,paclitaxel,2023-01-20 08:53:00,MD-03,73,M,diffuse,180,short
+Patient_002,paclitaxel,2023-02-10 13:59:00,MD-01,73,M,diffuse,180,short
+Patient_003,consultation,2022-06-11 13:58:00,MD-02,60,F,intestinal,520,long
+Patient_003,oxaliplatin,2022-06-18 12:44:00,MD-04,60,F,intestinal,520,long
+Patient_003,capecitabine,2022-06-19 15:32:00,MD-04,60,F,intestinal,520,long
+Patient_003,capecitabine,2022-07-10 14:35:00,MD-01,60,F,intestinal,520,long
+Patient_003,supportive care,2022-07-16 12:20:00,MD-04,60,F,intestinal,520,long
+Patient_004,consultation,2022-04-04 12:01:00,MD-03,48,F,intestinal,390,long
+Patient_004,oxaliplatin,2022-04-11 13:29:00,MD-04,48,F,intestinal,390,long
+Patient_004,capecitabine,2022-04-12 09:25:00,MD-04,48,F,intestinal,390,long
+Patient_004,capecitabine,2022-05-03 09:27:00,MD-04,48,F,intestinal,390,long
+Patient_004,capecitabine,2022-05-24 14:58:00,MD-03,48,F,intestinal,390,long
+Patient_005,consultation,2022-03-01 11:47:00,MD-04,64,F,diffuse,600,long
+Patient_005,oxaliplatin,2022-03-08 10:28:00,MD-01,64,F,diffuse,600,long
+Patient_005,capecitabine,2022-03-09 09:00:00,MD-04,64,F,diffuse,600,long
+Patient_005,capecitabine,2022-03-30 16:59:00,MD-01,64,F,diffuse,600,long
+Patient_005,supportive care,2022-04-05 11:15:00,MD-01,64,F,diffuse,600,long
+Patient_006,consultation,2022-09-21 11:00:00,MD-01,52,F,intestinal,150,short
+Patient_006,capecitabine,2022-09-28 15:41:00,MD-03,52,F,intestinal,150,short
+Patient_006,capecitabine,2022-10-19 14:34:00,MD-02,52,F,intestinal,150,short
+Patient_006,radiotherapy,2022-10-31 08:22:00,MD-02,52,F,intestinal,150,short
+Patient_007,consultation,2023-02-21 09:32:00,MD-03,67,M,intestinal,410,long
+Patient_007,radiotherapy,2023-02-28 12:37:00,MD-01,67,M,intestinal,410,long
+Patient_007,radiotherapy,2023-03-21 12:59:00,MD-03,67,M,intestinal,410,long
+Patient_008,consultation,2022-03-18 15:56:00,MD-02,55,F,intestinal,460,long
+Patient_008,oxaliplatin,2022-03-25 09:40:00,MD-04,55,F,intestinal,460,long
+Patient_008,capecitabine,2022-03-26 15:45:00,MD-03,55,F,intestinal,460,long
+Patient_008,capecitabine,2022-04-16 16:25:00,MD-03,55,F,intestinal,460,long
+Patient_009,consultation,2022-10-08 13:35:00,MD-02,59,M,other,230,short
+Patient_009,capecitabine,2022-10-15 09:39:00,MD-03,59,M,other,230,short
+Patient_009,capecitabine,2022-11-05 16:48:00,MD-02,59,M,other,230,short
+Patient_009,supportive care,2022-11-07 12:36:00,MD-03,59,M,other,230,short
+Patient_010,consultation,2022-12-15 08:48:00,MD-03,66,M,intestinal,640,long
+Patient_010,oxaliplatin,2022-12-22 13:09:00,MD-01,66,M,intestinal,640,long
+Patient_010,capecitabine,2022-12-23 13:42:00,MD-04,66,M,intestinal,640,long
+Patient_010,capecitabine,2023-01-13 10:34:00,MD-02,66,M,intestinal,640,long
+Patient_011,consultation,2023-01-18 10:16:00,MD-03,54,F,intestinal,610,long
+Patient_011,radiotherapy,2023-01-25 09:00:00,MD-04,54,F,intestinal,610,long
+Patient_011,capecitabine,2023-01-26 12:26:00,MD-01,54,F,intestinal,610,long
+Patient_011,capecitabine,2023-02-16 08:06:00,MD-02,54,F,intestinal,610,long
+Patient_011,supportive care,2023-02-22 08:19:00,MD-01,54,F,intestinal,610,long
+Patient_012,consultation,2022-05-08 09:28:00,MD-03,62,M,intestinal,560,long
+Patient_012,oxaliplatin,2022-05-15 15:59:00,MD-02,62,M,intestinal,560,long
+Patient_012,capecitabine,2022-05-16 14:53:00,MD-04,62,M,intestinal,560,long
+Patient_012,capecitabine,2022-06-06 09:41:00,MD-03,62,M,intestinal,560,long
+Patient_012,capecitabine,2022-06-27 15:23:00,MD-01,62,M,intestinal,560,long
+Patient_013,consultation,2022-06-28 16:08:00,MD-01,63,F,intestinal,330,short
+Patient_013,capecitabine,2022-07-05 12:06:00,MD-04,63,F,intestinal,330,short
+Patient_013,capecitabine,2022-07-26 10:06:00,MD-01,63,F,intestinal,330,short
+Patient_013,supportive care,2022-07-28 13:46:00,MD-02,63,F,intestinal,330,short
+Patient_014,consultation,2023-02-04 15:37:00,MD-02,71,M,diffuse,210,short
+Patient_014,paclitaxel,2023-02-11 16:18:00,MD-01,71,M,diffuse,210,short
+Patient_014,supportive care,2023-02-25 14:42:00,MD-02,71,M,diffuse,210,short
+Patient_014,paclitaxel,2023-03-04 10:50:00,MD-03,71,M,diffuse,210,short
+Patient_015,consultation,2022-04-21 08:47:00,MD-04,63,M,intestinal,250,short
+Patient_015,capecitabine,2022-04-28 08:18:00,MD-03,63,M,intestinal,250,short
+Patient_015,capecitabine,2022-05-19 12:46:00,MD-01,63,M,intestinal,250,short
+Patient_016,consultation,2022-11-28 09:43:00,MD-03,59,M,intestinal,700,long
+Patient_016,radiotherapy,2022-12-05 13:49:00,MD-04,59,M,intestinal,700,long
+Patient_016,capecitabine,2022-12-06 08:59:00,MD-04,59,M,intestinal,700,long
+Patient_016,capecitabine,2022-12-27 13:38:00,MD-02,59,M,intestinal,700,long
+Patient_017,consultation,2022-07-15 10:41:00,MD-02,80,M,diffuse,95,short
+Patient_017,capecitabine,2022-07-22 16:57:00,MD-02,80,M,diffuse,95,short
+Patient_017,supportive care,2022-08-05 10:42:00,MD-02,80,M,diffuse,95,short
+Patient_017,capecitabine,2022-08-12 14:17:00,MD-04,80,M,diffuse,95,short
+Patient_017,paclitaxel,2022-09-02 16:26:00,MD-01,80,M,diffuse,95,short
+Patient_017,paclitaxel,2022-09-23 14:19:00,MD-02,80,M,diffuse,95,short
+Patient_018,consultation,2022-09-04 15:38:00,MD-02,78,M,diffuse,120,short
+Patient_018,capecitabine,2022-09-11 09:35:00,MD-04,78,M,diffuse,120,short
+Patient_018,capecitabine,2022-10-02 08:12:00,MD-02,78,M,diffuse,120,short
+Patient_018,paclitaxel,2022-10-23 08:41:00,MD-01,78,M,diffuse,120,short
+Patient_018,paclitaxel,2022-11-13 15:55:00,MD-02,78,M,diffuse,120,short
+Patient_018,paclitaxel,2022-12-04 15:45:00,MD-01,78,M,diffuse,120,short
+Patient_019,consultation,2022-05-25 16:51:00,MD-04,58,M,other,500,long
+Patient_019,oxaliplatin,2022-06-01 14:27:00,MD-02,58,M,other,500,long
+Patient_019,capecitabine,2022-06-02 12:53:00,MD-03,58,M,other,500,long
+Patient_019,capecitabine,2022-06-23 08:02:00,MD-02,58,M,other,500,long
+Patient_019,supportive care,2022-06-29 15:51:00,MD-04,58,M,other,500,long
+Patient_020,consultation,2023-01-01 08:32:00,MD-04,76,M,diffuse,150,short
+Patient_020,capecitabine,2023-01-08 13:43:00,MD-03,76,M,diffuse,150,short
+Patient_020,supportive care,2023-01-22 15:20:00,MD-01,76,M,diffuse,150,short
+Patient_020,capecitabine,2023-01-29 15:29:00,MD-02,76,M,diffuse,150,short
+Patient_020,paclitaxel,2023-02-19 10:37:00,MD-02,76,M,diffuse,150,short
+Patient_020,paclitaxel,2023-03-12 14:39:00,MD-03,76,M,diffuse,150,short
+Patient_021,consultation,2022-10-25 14:36:00,MD-04,52,M,intestinal,430,long
+Patient_021,oxaliplatin,2022-11-01 16:33:00,MD-01,52,M,intestinal,430,long
+Patient_021,capecitabine,2022-11-02 11:49:00,MD-02,52,M,intestinal,430,long
+Patient_021,capecitabine,2022-11-23 08:45:00,MD-01,52,M,intestinal,430,long
+Patient_021,supportive care,2022-11-29 14:30:00,MD-02,52,M,intestinal,430,long
+Patient_022,consultation,2022-08-01 13:11:00,MD-03,83,M,diffuse,70,short
+Patient_022,capecitabine,2022-08-08 15:31:00,MD-04,83,M,diffuse,70,short
+Patient_022,capecitabine,2022-08-29 12:29:00,MD-02,83,M,diffuse,70,short
+Patient_022,paclitaxel,2022-09-19 13:33:00,MD-04,83,M,diffuse,70,short
+Patient_022,paclitaxel,2022-10-10 15:07:00,MD-03,83,M,diffuse,70,short
+Patient_022,paclitaxel,2022-10-31 09:54:00,MD-02,83,M,diffuse,70,short

@@ -1,0 +1,185 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{cmbright}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ }
+ \usepackage{titling}
+ \usepackage{hyperref}
+ \usepackage{xcolor}
+ \usepackage{booktabs}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+
+% Red marker for things we still have to do.
+% Remove all \todo{...} before submitting.
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\title{Explainable Predictive Process Monitoring}  % REFINE TITLE (e.g., name the XAI technique)
+\author{Jerrik Faber, Max Hoijng, Job Oosterkamp, Bora Şenel, Floris Vermeulen}
+\date{October 2026}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\fancypagestyle{plain}{%
+    \fancyhf{}
+    \fancyfoot[R]{\IfFileExists{jads.png}{\includegraphics[width=2cm]{jads.png}}{}}
+    \fancyfoot[L]{\thedate}
+    \fancyhead[L]{Process Mining (JM0211)}
+    \fancyhead[R]{Group 11}
+}
+\makeatletter
+\def\@maketitle{%
+  \newpage
+  \null
+  \vskip 1em%
+  \begin{center}%
+  \let \footnote \thanks
+    {\LARGE \@title \par}%
+    \vskip 1em%
+  \end{center}%
+  \par
+  \vskip 1em}
+\makeatother
+
+\begin{document}
+
+\maketitle
+
+\noindent\begin{tabular}{@{}ll}
+    Students & \theauthor\\
+    Group: & 11\\
+    \end{tabular}
+
+% The table of contents is left out on purpose: the short paper has a limit of
+% 5 pages excluding references.
+% \tableofcontents
+
+% ASSIGNMENT GROUP 11: Explainable Predictive Process Monitoring
+% Reproduce a post hoc XAI technique that finds the process features with the
+% greatest impact on the predictions of a predictive process monitoring model.
+% Contact person: Laura Genga.
+% Dates: draft for peer review 28 Oct 23:59, peer feedback 3 Nov 23:59,
+% final deliverables 9 Nov 23:59, poster session 12 Nov 13:45.
+% Limit: 5 pages excluding references.
+
+% ============================================================
+\section{Motivation and Scientific Background}
+% ============================================================
+
+Process mining uses the event logs of information systems to analyse and improve processes~\cite{aalst2016}. Predictive process monitoring (PPM) goes one step further and uses historical event data to predict the future of cases that are still running, for example their outcome, so that process owners can intervene before a case ends~\cite{teinemaa2019}. Benchmarks show that black-box models such as XGBoost and random forests predict outcomes accurately~\cite{teinemaa2019}, but they do not show why a case gets a certain prediction. Without that insight an analyst cannot judge whether a prediction can be trusted or what to change in the process. Explainable AI (XAI) addresses this problem~\cite{arrieta2020}, and post hoc methods do so for models that are already trained. Existing post hoc methods show which activities influence a prediction, but not whether it matters \emph{where} in the trace an activity is executed. Vazifehdoostirani et al.~\cite{vazifehdoostirani2024} close this gap with the location permutation importance. We reproduce their technique and change the way the activities to test are chosen (Section~\ref{sec:approach}).
+
+\paragraph{Use case.}
+\todo{Give one concrete example where it matters why a model makes a prediction.}
+
+\paragraph{Embedding in the course.}
+\todo{Say where predictive process monitoring fits in the course and where our XAI technique fits in.}
+
+\paragraph{Commonalities and differences.}
+\todo{Compare our topic to the other groups. Groups 9 and 10 also do predictive process monitoring (trace clustering with LLMs, inter-case features) and Group 7 does prescriptive monitoring. What is the same and what is different?}
+
+% ============================================================
+\section{Conceptual Approach}
+\label{sec:approach}
+% ============================================================
+
+We reproduce the post hoc XAI technique of Vazifehdoostirani et al.~\cite{vazifehdoostirani2024}. It measures how much the \emph{location} of activities in a trace matters for an outcome prediction model, in the spirit of permutation feature importance: if we shuffle the locations of a group of activities (an itemset) and the model gets worse, the location of that itemset matters. We change one step, the choice of the itemsets, and compare the results (Figure~\ref{fig:approach}).
+
+\paragraph{Input.}
+An event log with, for every case, the activities in execution order and a binary outcome label. Timestamps only order the events, and resources are not used. The variant of step 2 also needs case attributes for its case-distance measure (for BPIC11: age, diagnosis, diagnosis code, specialism code, treatment code). Traces are encoded with index-based encoding: position $i$ of the trace is a feature that holds the activity at that position. The method does not depend on the model type, and like the original paper we use XGBoost.
+
+\paragraph{Parameters.}
+Table~\ref{tab:parameters} lists the parameters and the values we use.
+
+\begin{table}[H]
+    \centering
+    \caption{Parameters of the approach.}
+    \label{tab:parameters}
+    \small
+    \begin{tabular}{@{}p{3.3cm}p{8.3cm}p{3.2cm}@{}}
+        \toprule
+        Parameter & Meaning & Value \\
+        \midrule
+        Itemset strategy & How the itemsets are chosen & A: Apriori, B: IMPresseD \\
+        Minimum support, top $k$ (A) & Smallest share of cases that contain an itemset, and number of itemsets with more than one activity that are kept & 0.5 and 10 (also 0.2 and 25) \\
+        Pattern length (B) & Longest pattern; every extension step adds one activity & 3 \\
+        Extension rules (B) & A pattern is extended by an activity that directly or eventually follows or precedes it & all four \\
+        Feasibility, order preservation & Keep the permuted traces realistic (step 3) & on \\
+        Folds, repetitions & Cross-validation folds, and random permutations per itemset & 5 and 10 \\
+        Test size, seed & Share of cases held out for the itemset selection, and the random seed & 0.2 and 42 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\paragraph{Steps and methods.}
+\begin{enumerate}
+    \item \textbf{Baseline.} Train the model on the index-encoded log and measure its F1-score with cross-validation.
+    \item \textbf{Itemset selection.} Choose the activity sets whose location will be tested. The original method uses Apriori. Our variant uses the outcome-oriented patterns of IMPresseD~\cite{vazifehdoostirani2023}. Both give a list of activity sets, and the rest of the pipeline stays the same.
+    \item \textbf{Location permutation.} For each itemset, shuffle the locations of its activities over the traces. A new location of an activity must be a location where that activity occurs somewhere in the log (feasibility), and the order of the activities within the itemset stays the same (order preservation). Then encode the permuted log again.
+    \item \textbf{Importance.} Score the permuted log with the model from step 1. The drop in F1 compared with the baseline is the importance of the location of the itemset. The shuffle is random, so it is repeated 10 times.
+\end{enumerate}
+
+\emph{Strategy A: Apriori.} Every single activity is analysed, together with the most frequent itemsets of two or three activities. Apriori searches level by level for sets that occur in at least the minimum support of the cases, using the rule that every subset of a frequent set must be frequent too.
+
+\emph{Strategy B: IMPresseD.} A pattern is a chain of activities in which neighbours are related directly (the second follows immediately) or eventually (it follows later, with at least one event in between). Every pattern is scored on three interest functions: \emph{case coverage} (share of cases that contain it, to maximise), \emph{outcome interest} (information gain of the outcome label from the number of times the pattern occurs in a case, to maximise) and \emph{case distance} (mean distance between cases with and without the pattern based on case attributes, to minimise; this lowers the risk that a pattern only looks important because of, for example, the age of the patients). A pattern is dropped if another pattern is at least as good on all three functions and strictly better on one. The patterns that remain form the Pareto front, so no threshold has to be chosen. Starting from all single activities, the patterns of the front are extended by one activity and scored again, up to length 3. The assignment asks for activity sets, so the ordering relations are dropped at the end: A$\to$B, B$\to$A and A$\Rightarrow$B all give $\{A,B\}$, and duplicates are removed. The patterns are discovered on the training part of the log only, because the outcome interest uses the labels and the choice of itemsets should carry no information about the test cases.
+
+\paragraph{Output.}
+For every itemset, a distribution of F1 drops: how much the location of that itemset matters for the predictions. We get this for the itemsets of both strategies, which lets us check whether the same activities and locations come out as important, and how many itemsets each strategy needs.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/figure1_approach.png}
+    \caption{The approach. Strategy A (Apriori) and strategy B (IMPresseD) both give a list of itemsets for step 2. The other steps are the same for both.}
+    \label{fig:approach}
+\end{figure}
+
+% ============================================================
+\section{Implementation}
+% ============================================================
+
+\todo{Implementation: packages, structure and how to run (selection, model, location permutation).}
+
+% ============================================================
+\section{Evaluation Design and Results}
+% ============================================================
+
+\paragraph{Data.}
+\todo{Artificial data and the BPIC11 logs.}
+
+\paragraph{Evaluation design.}
+\todo{Metrics, gold standard and parameter settings.}
+
+\paragraph{Results.}
+\todo{Results and comparison of Apriori and IMPresseD.}
+
+% ============================================================
+\section{Limitations and Future Work}
+% ============================================================
+
+\paragraph{Limitations.}
+\todo{Limitations of the approach and of the evaluation.}
+
+\paragraph{Future work.}
+\todo{Improvement directions.}
+
+% ============================================================
+\section*{Technology Statement}
+% ============================================================
+% Mandatory. Without it the assignment gets 0 points.
+% Text from the course syllabus. Fill in the capitalized parts.
+
+During the preparation of this work, I/We used [NAME TOOL / SERVICE / VERSION OF AI TOOL] in order to [REASON]. The following parts of the assignment were affected/generated by AI tool usage: [INTRODUCTION / METHODS / xxx, DISCUSSION]. After using this tool/service, [NAME STUDENT(S)] evaluated the validity of the tool's outputs, including the sources that generative AI tools have used, and edited the content as needed. As a consequence, [NAME STUDENT(S)] take(s) full responsibility for the content of their work.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

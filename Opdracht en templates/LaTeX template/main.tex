@@ -1,0 +1,66 @@
+\documentclass{article}
+\usepackage[a4paper, bindingoffset=0 cm, left=2.5cm, right=2.5cm, top=1.5cm, bottom=1.5cm, footskip=0.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{mdframed}
+\usepackage{tikz}
+\usepackage{biblatex}
+\usepackage{csquotes}
+\addbibresource{literature.bib}
+\usepackage{hyperref}
+
+\title{1JM0211 Process Mining \\Title of Your Topic}
+\author{Group Number and Group Member Names}
+\date{Submission Date}
+
+\begin{document}
+\newmdenv[linewidth=1.5pt, frametitlerule=true, roundcorner=3pt]{mybox}
+\pagestyle{empty}
+\let\svmaketitle\maketitle
+\def\maketitle{\svmaketitle\thispagestyle{empty}}
+\maketitle
+
+\begin{mybox}[frametitle = Remarks (to be removed upon submission)]
+Page limit: 5 pages excluding references; use appropriate scientific references where possible \cite{DBLP:books/sp/Aalst16}; your short paper shall follow the structure outlined below
+\end{mybox}
+
+
+\section{Motivation and Scientific Background}\label{sec:motivation}
+Build a convincing case about what the approach does and why it is relevant.
+
+Guiding remarks/questions:
+\begin{itemize}
+    \item Motivate why the topic is relevant, e.g., by having a concrete use case or example. 
+    \item How is your topic embedded in the course and related to the topics of the other groups?
+    \item What are commonalities and differences to other course/groups' topics?
+\end{itemize}
+
+
+\section{Conceptual Approach}\label{sec:conceptual_approach}
+Describe your approach from a conceptual point of view. Provide a visualization of your approach.
+
+Guiding remarks/questions:
+\begin{itemize}
+    \item What input is required for your approach? Not just describe it on a high level, i.e., if the approach requires an event log, outline also what characteristics this event log needs to fulfill, e.g., do you need the control-flow perspective or also other attributes like time, resources, etc..
+    \item If there are parameters to be set, explain those and their purpose.
+    \item What are the most crucial steps of your approach?
+    \item What methods did you use to achieve these steps, i.e., describe in detail how your approach works?
+    \item What is the output of your approach?
+\end{itemize}
+
+
+\section{Implementation}\label{sec:implementation}
+Describe your implementation, e.g., which packages you used or any other important aspects that are not conceptual ones, in such a way that your approach becomes reproducible.
+
+\section{Evaluation Design and Results}\label{sec:evaluation}
+Describe the data you used for the evaluation, e.g., if and how you designed artificial data for a preliminary evaluation as well as the data provided through Canvas.
+Describe and motivate your evaluation design, e.g., quantitative approach measuring precision, recall or other relevant metrics; qualitative investigation of corner cases/cases that failed explaining why they failed, etc.. A combination of both is possible. Explain how you created the gold standard (ground truth) to be able to test the correctness of your approach. Explain parameter settings and testing, if applicable.
+Explain and visualize your evaluation results.
+If applicable, the results are compared to relevant related algorithms/methods.
+
+\section{Limitations and Future Work}\label{sec:limitations_futurework}
+Elaborate on limitations of, e.g., the conceptual design of the approach or observations made based on the evaluation. Outline improvement directions for future work of your approach and/or the topic in general.
+
+\printbibliography
+
+\end{document}

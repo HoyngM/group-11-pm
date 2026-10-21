@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "1. Importance: synthetic log (test set, ~10 s)",
+      "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/run_location_importance.py",
+      "args": ["--datasets", "synthetic", "--evaluate-on", "test"],
+      "console": "integratedTerminal", "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "2. Importance: BPIC11 f1 (quick look: 2 repetitions, 30 itemsets)",
+      "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/run_location_importance.py",
+      "args": ["--datasets", "BPIC11_f1", "--repetitions", "2", "--max-itemsets", "30", "--evaluate-on", "test"],
+      "console": "integratedTerminal", "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "3. Importance: all datasets, full settings (~5 min)",
+      "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/run_location_importance.py",
+      "args": ["--evaluate-on", "test"],
+      "console": "integratedTerminal", "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "4. Importance: all datasets, like the reference code (train set)",
+      "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/run_location_importance.py",
+      "args": ["--evaluate-on", "train"],
+      "console": "integratedTerminal", "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "5. Unit tests",
+      "type": "debugpy", "request": "launch", "module": "pytest", "args": ["-v"],
+      "console": "integratedTerminal", "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "6. Regenerate synthetic data and controls",
+      "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/generate_data.py",
+      "console": "integratedTerminal", "cwd": "${workspaceFolder}"
+    }
+  ]
+}
