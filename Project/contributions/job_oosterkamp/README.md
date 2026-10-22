@@ -3,7 +3,14 @@
 Date: 22 October 2026. Part of the work of Floris and Job (pipeline from the original paper and data
 preparation, see the division of work).
 
-This folder documents what was run, why, how to reproduce it, and what came out. The **code** that was
+This folder documents what was run, why, how to reproduce it, and what came out.
+
+> **Update (later on 22 October): all code is now one pipeline.** The separate scripts named
+> below (`run_location_importance.py`, `compare_strategies.py`, `importance_config.yaml`, ...)
+> no longer exist. Everything runs with `python main.py` and one `config.yaml`; see
+> "Merging the code into one system" at the end of this file and `Project/code/README.md`.
+> The pipeline was rerun after the merge: all 79 result files in `results/` came out byte for
+> byte identical, so the numbers below are still exactly what the code produces. The **code** that was
 added lives in `Project/code/` (where it has to be, so that the project keeps one structure and one set of
 entry points). This folder only holds the **documentation, the results and the run logs**, because
 `Project/code/results/` is ignored by git and the results would otherwise not be visible to the group.
@@ -55,18 +62,19 @@ From `Project/code/`:
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python run_location_importance.py --evaluate-on train --top 10    # about 15 minutes
-python run_location_importance.py --evaluate-on test --top 10     # about 5 minutes
-python compare_strategies.py                                      # a few seconds
-python -m pytest                                                  # 33 tests
+python main.py                                                    # about 20 minutes
+python -m pytest
 ```
 
-Settings (from `importance_config.yaml`): 5 stratified folds, 10 permutations per itemset and fold,
+(Before the merge this took three commands: `run_location_importance.py --evaluate-on train`,
+`run_location_importance.py --evaluate-on test` and `compare_strategies.py`.)
+
+Settings (now in `config.yaml`): 5 stratified folds, 10 permutations per itemset and fold,
 feasibility constraint on, seed 42, `exact_tracking: false` and `accumulate_permutations: false`.
 Apriori: minimum support 0.5, top 10 multi-activity itemsets plus every single activity, selected on all
 cases. IMPresseD: pattern lengths 1-3, selected on 80% of the cases. Python 3.11.5, xgboost 3.2.0.
 
-The results in `results/` are a copy of `Project/code/results/importance/` after these commands.
+The results in `results/` are a copy of `Project/code/results/importance/` (and of `results/comparison/` in the new layout) after these commands.
 
 ## What is in this folder
 
@@ -150,5 +158,32 @@ Both strategies find the planted activity `b`. With only 15 cases these numbers 
    question for Laura (office hour 26 Oct, questions by 25 Oct 15:00).
 2. Do we report the importance of an itemset above that of its best single activity (point 5)?
 3. Who writes Sections 3 and 4 of the paper before the draft deadline of 28 Oct?
-4. The assignment asks for one main method; there are now three entry points (`main.py`,
-   `run_location_importance.py`, `compare_strategies.py`). These still have to be merged.
+4. ~~The assignment asks for one main method.~~ Done, see below.
+
+## Merging the code into one system
+
+The implementation instructions ask for one main method, parameters in a YAML file, a README
+with the exact commands, a complete `requirements.txt` and reproducible results. Before the merge
+the code had five entry scripts and two configs. What was changed:
+
+| Before | After | Why |
+|---|---|---|
+| `main.py` (selection), `run_location_importance.py`, `compare_strategies.py`, `generate_data.py`, `check_controls.py` | one `main.py` with five steps: `generate`, `check`, `select`, `importance`, `compare` (`python main.py --steps ...` runs a subset) | One entry point, as the instructions require. |
+| `config.yaml` + `importance_config.yaml` | one `config.yaml` | All parameters in one place. |
+| `itemset_selection/experiment.py` (ExperimentRunner) | `pipeline/runner.py` (class `Pipeline`) | Orchestrates all steps; each step reads and writes files, so it can be rerun on its own. |
+| The selection report read the raw CSV (`AC370000`, all cases); the importance cleaned the log (`ac370000`, rare cases removed) and selected the itemsets again | Every step uses the cleaned log (`PreparedLog`); step `importance` reads the itemsets that step `select` saved | The selection report and the importance results now describe exactly the same log and itemsets. |
+| `itemset_selection/evaluation.py`, `location_permutation/comparison.py`, `check_controls.py` | `evaluation/selection_metrics.py`, `evaluation/strategy_comparison.py`, `evaluation/control_checks.py` | All evaluation code in one package. |
+| Apriori sensitivity setting selected on the training split | selected on all cases, like the Apriori baseline; `importance: false` marks it as selection-only | Consistent with the baseline. |
+| `requirements.txt` with minimum versions | exact versions (`==`) | XGBoost results can differ between versions. |
+| `.vscode` pointed at a personal Python and at removed scripts | points at `.venv` and at `main.py` | Works on every machine. |
+
+Checks after the merge:
+
+* `python main.py` was run in full; all 79 CSV files of the importance and the comparison are
+  byte for byte identical to the run before the merge.
+* The synthetic data written by step `generate` is identical to the committed files, and step
+  `check` gives the same correlations as before.
+* The selection gives the same numbers of itemsets (e.g. 174 / 32 on BPIC11 f1). Only the
+  selection report of the original `main.py` changed, because it now uses the cleaned log.
+* 37 tests pass (4 new end-to-end tests of the pipeline in `tests/test_pipeline.py`), also in a
+  fresh virtual environment installed from `requirements.txt`.
