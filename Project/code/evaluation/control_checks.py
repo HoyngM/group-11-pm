@@ -1,18 +1,15 @@
 """Check that the planted location effect of B exists in the synthetic log and not in the controls.
 
-For every log, the relative position of the first ``B`` in a case (0 = start,
-1 = end) is correlated with the case outcome (Spearman). Expected result:
-a strong correlation for ``synthetic`` and a correlation close to zero
-(large p-value) for the three shuffled controls.
+This check looks at the data only, without any model: it confirms that the ground truth we
+planted is really there before we ask the location permutation importance to find it.
 
-Usage:
-    python check_controls.py                  # reads the CSV files in data/synthetic/
-    python check_controls.py --data-directory data/synthetic
+For every log, the relative position of the first ``B`` in a case (0 = start, 1 = end) is
+correlated with the case outcome (Spearman). Expected result: a strong correlation for
+``synthetic`` and a correlation close to zero (large p-value) for the three shuffled controls.
 """
 
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 
 import pandas as pd
@@ -33,6 +30,7 @@ def relative_position_of_key_activity(log: pd.DataFrame) -> pd.DataFrame:
 
 
 def summarise(name: str, log: pd.DataFrame) -> dict:
+    """One row of the check: how many cases contain ``B`` and how strongly its position predicts the label."""
     cases = relative_position_of_key_activity(log)
     correlation, p_value = spearmanr(cases["relative_position"], cases[LABEL])
     return {
@@ -43,15 +41,7 @@ def summarise(name: str, log: pd.DataFrame) -> dict:
     }
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--data-directory", type=Path, default=Path(__file__).resolve().parent / "data" / "synthetic",
-                        help="folder with the CSV files from generate_data.py (default: data/synthetic)")
-    arguments = parser.parse_args()
-
-    rows = [summarise(name, pd.read_csv(arguments.data_directory / f"{name}.csv")) for name in LOG_NAMES]
-    print(pd.DataFrame(rows).to_string(index=False))
-
-
-if __name__ == "__main__":
-    main()
+def check_controls(data_directory: Path) -> pd.DataFrame:
+    """Run the check on the synthetic log and its controls in ``data_directory``."""
+    rows = [summarise(name, pd.read_csv(data_directory / f"{name}.csv")) for name in LOG_NAMES]
+    return pd.DataFrame(rows)

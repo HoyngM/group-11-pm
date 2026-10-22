@@ -1,15 +1,20 @@
-"""Measures to compare selection strategies with each other and with a gold standard."""
+"""Measures for the *selection* step: which itemsets did each strategy choose?
+
+These numbers only look at the selected itemsets, before any model is trained. They are
+written to ``results/selection/summary.csv``. The comparison of the *importance* of the
+itemsets is in ``evaluation/strategy_comparison.py``.
+"""
 
 from __future__ import annotations
 
-from .selector import SelectionResult
+from itemset_selection.selector import SelectionResult
 
 
 def _activities(result: SelectionResult) -> set[str]:
     return set().union(*result.itemsets) if result.itemsets else set()
 
 
-def compare_strategies(reference: SelectionResult, other: SelectionResult) -> dict:
+def compare_selections(reference: SelectionResult, other: SelectionResult) -> dict:
     """How much do the selected itemsets and activities of two strategies overlap?"""
     itemsets_a, itemsets_b = set(reference.itemsets), set(other.itemsets)
     activities_a, activities_b = _activities(reference), _activities(other)

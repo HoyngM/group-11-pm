@@ -1,61 +1,116 @@
-# Configuration of the itemset selection experiments.
-# All paths are relative to this file.
+# Configuration of the whole pipeline (python main.py). All paths are relative to this file.
+# Every parameter of the experiments is set here; nothing has to be changed in the code.
+# Command line options of main.py can override some of them for a quick run (see README).
 
-seed: 42                 # random seed for the train/test split and the simulated logs
-test_size: 0.2           # share of cases held out; itemsets are selected on the rest
+seed: 42                  # random seed: train/test split, folds, model, synthetic and simulated logs
+test_size: 0.2            # share of cases kept out of the itemset selection (select_on: training_split)
 output_directory: results
 
-# Column names in the CSV event logs (BPIC11 files of Vazifehdoostirani et al.).
+# Column names in the CSV event logs (the BPIC11 files of Vazifehdoostirani et al. and our own logs).
 columns:
   case: case:concept:name
   activity: concept:name
   label: label
   order: event_nr
 
-# Case-level attributes for the case-distance interest function of IMPresseD.
-case_attributes:
+# Case attributes for the case-distance interest function of IMPresseD.
+bpic11_attributes: &bpic11_attributes
   numeric: [Age]
   categorical: [Diagnosis, Diagnosis code, Specialism code, Treatment code]
+synthetic_attributes: &synthetic_attributes
+  numeric: [Age]
+  categorical: [Category]
 
+# Step "generate": the synthetic log with a planted location effect of activity B (ground truth)
+# and three shuffled copies in which that effect is destroyed (negative controls).
+synthetic_data:
+  output_directory: data/synthetic
+  events: 100               # exact number of events of the synthetic log
+  label_noise: 0.1          # probability that a label is flipped, so the effect is not perfect
+
+# Event logs used by the steps "select", "importance" and "compare".
 datasets:
+  # The three BPIC11 logs of the assignment, from
+  # https://github.com/MozhganVD/PermutationLocationImportance/tree/master/datasets
   - name: BPIC11_f1
     path: data/BPIC11_f1_trunc36.csv
+    case_attributes: *bpic11_attributes
   - name: BPIC11_f2
     path: data/BPIC11_f2_trunc40.csv
+    case_attributes: *bpic11_attributes
   - name: BPIC11_f3
     path: data/BPIC11_f3_trunc31.csv
+    case_attributes: *bpic11_attributes
+  # Synthetic log and negative controls (written by the step "generate").
+  - name: synthetic
+    path: data/synthetic/synthetic.csv
+    case_attributes: *synthetic_attributes
+  - name: shuffled_within_case
+    path: data/synthetic/shuffled_within_case.csv
+    case_attributes: *synthetic_attributes
+  - name: shuffled_outcomes
+    path: data/synthetic/shuffled_outcomes.csv
+    case_attributes: *synthetic_attributes
+  - name: shuffled_across_traces
+    path: data/synthetic/shuffled_across_traces.csv
+    case_attributes: *synthetic_attributes
 
-# Strategies that choose the itemsets. The first one is the reference that the
-# others are compared with.
+# Strategies that choose the itemsets (step "select").
+#   select_on: all            -> select on all cases (Apriori does not use the labels)
+#              training_split -> select on 1 - test_size of the cases (IMPresseD uses the labels)
+#   importance: true          -> also measure the location importance of these itemsets
 strategies:
-  # Baseline of the original paper: Apriori with the default settings of the authors.
+  # Baseline of the original paper: Apriori with the default settings of the authors' code.
   - name: apriori
     type: apriori
-    min_support: 0.5     # fraction of cases that must contain the itemset
-    top_k: 10            # number of multi-activity itemsets that are kept
-    max_length: 3        # largest itemset size (same as the IMPresseD variant)
-    singletons: all      # all | frequent | none
-  # Sensitivity of the baseline: lower support, more itemsets.
+    select_on: all
+    importance: true
+    min_support: 0.5        # fraction of cases that must contain the itemset
+    top_k: 10               # number of itemsets with more than one activity that are kept
+    max_length: 3           # largest itemset size (same as the IMPresseD variant)
+    singletons: all         # all | frequent | none
+  # Sensitivity of the baseline: lower support, more itemsets. Selection only.
   - name: apriori_support0.2_top25
     type: apriori
+    select_on: all
+    importance: false
     min_support: 0.2
     top_k: 25
     max_length: 3
     singletons: all
-  # Variant: pattern extraction of IMPresseD (Pareto front of the interest functions).
+  # Variant: pattern extraction of IMPresseD (Pareto front of the three interest functions).
   - name: impressed
     type: impressed
-    max_pattern_length: 3  # pattern lengths 1, 2 and 3
+    select_on: training_split
+    importance: true
+    max_pattern_length: 3   # pattern lengths 1, 2 and 3
     extend_eventual_patterns: false
 
-# Simulated logs in which the location of activities determines the outcome.
+# Step "select" also runs on simulated logs with a known gold standard, to check whether the
+# strategies select the planted itemsets.
 simulation:
-  repetitions: 10        # logs per scenario, with seeds seed, seed+1, ...
-  case_attributes:
-    numeric: [Age]
-    categorical: [Category]
+  repetitions: 10           # logs per scenario, with seeds seed, seed+1, ...
+  case_attributes: *synthetic_attributes
   scenarios:
     - name: SIM_rare_pair       # the pair P,Q occurs in 30% of the cases
       share_with_pair: 0.3
     - name: SIM_frequent_pair   # the pair P,Q occurs in 60% of the cases
       share_with_pair: 0.6
+
+# Step "importance": the location permutation importance of Vazifehdoostirani et al. (2024).
+importance:
+  folds: 5                  # stratified cross-validation folds (as in the paper)
+  repetitions: 10           # location permutations per itemset and fold (as in the paper)
+  constrain: true           # feasibility: an activity only moves to locations where it was observed
+  evaluate_on: [train, test]  # measure the F1 drop on the training cases (as the reference code),
+                              # on the held-out test cases of each fold, or both
+  exact_tracking: false     # false = literal port of the reference shuffle (off-by-one in its bookkeeping)
+  accumulate_permutations: false  # true = like the reference code, which never resets the permuted traces
+
+# Step "compare": the location importance of two strategies side by side.
+comparison:
+  reference: apriori
+  variant: impressed
+  datasets: [BPIC11_f1, BPIC11_f2, BPIC11_f3]
+  top_k: 10                 # most important itemsets that are compared
+  plot_top: 8               # itemsets per strategy in the figure

@@ -27,8 +27,7 @@ class PreparedLog:
 
         frame = frame.copy()
         frame[case_column] = frame[case_column].astype(str)
-        frame[activity_column] = (frame[activity_column].astype(str).str.lower()
-                                  .str.replace(" ", "").str.replace("-", "").str.replace("_", ""))
+        frame[activity_column] = frame[activity_column].astype(str).map(self.clean_activity_name)
         frame = frame.sort_values([case_column, order_column], kind="stable")
 
         events_per_activity = frame.groupby(activity_column)[case_column].count()
@@ -48,6 +47,14 @@ class PreparedLog:
         }
 
         self._column_of = {activity: index for index, activity in enumerate([self.PADDING, *self.activities])}
+
+    @staticmethod
+    def clean_activity_name(name: str) -> str:
+        """Activity name as the reference code writes it: lower case, without spaces, ``-`` and ``_``.
+
+        Also used to write the gold standard of the simulated logs in the same spelling.
+        """
+        return name.lower().replace(" ", "").replace("-", "").replace("_", "")
 
     @classmethod
     def from_csv(cls, path: str, **kwargs) -> "PreparedLog":

@@ -3,8 +3,8 @@
 Why this module exists
 ----------------------
 The assignment asks whether the importance of activities and their locations changes when
-the itemsets are chosen by IMPresseD instead of by Apriori. ``run_location_importance.py``
-computes, per dataset and strategy, the location importance of every selected itemset: the
+the itemsets are chosen by IMPresseD instead of by Apriori. The ``importance`` step of
+``main.py`` computes, per dataset and strategy, the location importance of every selected itemset: the
 mean drop in F1 over 5 folds x 10 permutations. It writes these numbers to
 ``results/importance/<dataset>/evaluated_on_<train|test>/<strategy>_summary.csv``.
 
@@ -78,7 +78,7 @@ class StrategySummary:
 
     @classmethod
     def from_folder(cls, folder: Path, name: str) -> "StrategySummary":
-        """Read ``<folder>/<name>_summary.csv`` as written by ``run_location_importance.py``."""
+        """Read ``<folder>/<name>_summary.csv`` as written by the ``importance`` step."""
         table = pd.read_csv(folder / f"{name}_summary.csv")
         return cls(name, table.sort_values("mean", ascending=False).reset_index(drop=True))
 
@@ -181,9 +181,9 @@ class StrategyComparison:
 class ComparisonReport:
     """Runs the comparison for several datasets and evaluation settings and writes the output.
 
-    ``results_directory`` is the folder that ``run_location_importance.py`` wrote to
+    ``results_directory`` is the folder that the ``importance`` step wrote to
     (``results/importance`` by default). ``first`` and ``second`` are strategy names as used in
-    ``importance_config.yaml``.
+    ``config.yaml``.
     """
 
     def __init__(self, results_directory: Path, first: str = "apriori", second: str = "impressed",

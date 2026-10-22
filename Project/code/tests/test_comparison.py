@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from location_permutation.comparison import StrategyComparison, StrategySummary
+from evaluation.strategy_comparison import StrategyComparison, StrategySummary
 
 
 def summary(name: str, rows: list[tuple[str, float]]) -> StrategySummary:
