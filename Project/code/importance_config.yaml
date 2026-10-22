@@ -17,9 +17,20 @@ columns:
   label: label
   order: event_nr
 
+# The three BPIC11 logs required by the assignment, then the synthetic log and two controls.
 datasets:
   - name: BPIC11_f1
     path: data/BPIC11_f1_trunc36.csv
+    case_attributes:
+      numeric: [Age]
+      categorical: [Diagnosis, Diagnosis code, Specialism code, Treatment code]
+  - name: BPIC11_f2
+    path: data/BPIC11_f2_trunc40.csv
+    case_attributes:
+      numeric: [Age]
+      categorical: [Diagnosis, Diagnosis code, Specialism code, Treatment code]
+  - name: BPIC11_f3
+    path: data/BPIC11_f3_trunc31.csv
     case_attributes:
       numeric: [Age]
       categorical: [Diagnosis, Diagnosis code, Specialism code, Treatment code]

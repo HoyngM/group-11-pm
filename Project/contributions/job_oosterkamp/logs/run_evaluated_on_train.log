@@ -1,0 +1,159 @@
+
+=== BPIC11_f1: 1130 cases, 164 activities, max trace length 36
+-- apriori: 174 itemsets (147 s), train F1 0.994, test F1 0.907
+                     itemset  size   mean    std
+                    ac370000     1 0.0571 0.0068
+ac370000, ac370442, ac370443     3 0.0411 0.0054
+                    ac419100     1 0.0401 0.0060
+ac370000, ac370419, ac370443     3 0.0395 0.0059
+            370407, ac370000     2 0.0393 0.0060
+  370407, ac370000, ac370419     3 0.0391 0.0057
+ac370000, ac370419, ac370442     3 0.0389 0.0050
+          ac370000, ac370419     2 0.0376 0.0059
+          ac370000, ac370442     2 0.0370 0.0057
+          ac370000, ac370443     2 0.0360 0.0055
+-- impressed: 32 itemsets (51 s), train F1 0.994, test F1 0.907
+                     itemset  size   mean    std
+                    ac370000     1 0.0582 0.0087
+          ac370000, ac379999     2 0.0408 0.0056
+                    ac419100     1 0.0398 0.0067
+            370407, ac370000     2 0.0395 0.0057
+          ac370000, ac370419     2 0.0375 0.0059
+          ac411100, ac419100     2 0.0318 0.0062
+          ac411100, ac415100     2 0.0256 0.0062
+ac411100, ac415100, ac419100     3 0.0237 0.0041
+ac370000, ac379999, ac411100     3 0.0235 0.0051
+                    ac415100     1 0.0189 0.0055
+
+=== BPIC11_f2: 1130 cases, 207 activities, max trace length 40
+-- apriori: 217 itemsets (223 s), train F1 0.994, test F1 0.895
+                     itemset  size   mean    std
+                      376400     1 0.1366 0.0114
+                    ac370000     1 0.1050 0.0101
+ac370000, ac370419, ac379999     3 0.0986 0.0103
+          ac370000, ac370419     2 0.0954 0.0078
+  370407, ac370000, ac379999     3 0.0950 0.0095
+            370407, ac370000     2 0.0920 0.0102
+          ac370000, ac379999     2 0.0917 0.0078
+          ac370000, ac370443     2 0.0878 0.0082
+ac370000, ac379999, ac419100     3 0.0857 0.0086
+          ac370000, ac419100     2 0.0809 0.0086
+-- impressed: 62 itemsets (403 s), train F1 0.994, test F1 0.895
+                   itemset  size   mean    std
+ 376400, 378619a, ac370000     3 0.1682 0.0114
+           376400, 378619a     2 0.1631 0.0096
+376400, ac370000, ac379999     3 0.1588 0.0089
+ 376400, 378619a, ac419100     3 0.1582 0.0089
+          376400, ac370000     2 0.1551 0.0095
+376400, ac370000, ac419100     3 0.1501 0.0103
+          376400, ac379999     2 0.1427 0.0117
+           370488e, 376400     2 0.1383 0.0097
+                    376400     1 0.1354 0.0107
+           376400, 377498a     2 0.1347 0.0099
+
+=== BPIC11_f3: 1111 cases, 156 activities, max trace length 31
+-- apriori: 161 itemsets (43 s), train F1 0.995, test F1 0.934
+                   itemset  size   mean    std
+                  ac370000     1 0.1326 0.0151
+370407, ac370000, ac370419     3 0.0413 0.0120
+          370407, ac370000     2 0.0407 0.0062
+        ac370000, ac370419     2 0.0381 0.0069
+        ac370000, ac370443     2 0.0323 0.0041
+                  ac419100     1 0.0258 0.0039
+                  ac411100     1 0.0219 0.0038
+          370407, ac370419     2 0.0194 0.0040
+                    370407     1 0.0170 0.0034
+                  ac410100     1 0.0144 0.0028
+-- impressed: 29 itemsets (25 s), train F1 0.995, test F1 0.934
+                     itemset  size   mean    std
+                    ac370000     1 0.1338 0.0163
+          ac370000, ac370419     2 0.0378 0.0071
+           370712b, ac370000     2 0.0345 0.0104
+          ac370000, ac370442     2 0.0326 0.0067
+           370488e, ac370000     2 0.0294 0.0043
+           370488g, ac370000     2 0.0291 0.0041
+                    ac419100     1 0.0257 0.0037
+          ac411100, ac419100     2 0.0237 0.0040
+ac411100, ac415100, ac419100     3 0.0137 0.0025
+          ac415100, ac419100     2 0.0133 0.0034
+
+=== synthetic: 15 cases, 8 activities, max trace length 7
+-- apriori: 18 itemsets (1 s), train F1 0.709, test F1 0.647
+           itemset  size   mean    std
+b, close, register     3 0.2397 0.2219
+          b, close     2 0.2322 0.2095
+                 b     1 0.2281 0.2098
+       b, register     2 0.2257 0.2048
+       b, close, d     3 0.1268 0.1472
+    b, f, register     3 0.1246 0.1215
+              b, d     2 0.1113 0.1371
+    b, d, register     3 0.1040 0.1226
+              b, f     2 0.1035 0.1125
+       b, close, f     3 0.0983 0.1145
+-- impressed: 15 itemsets (1 s), train F1 0.709, test F1 0.647
+       itemset  size   mean    std
+             b     1 0.2281 0.2098
+   b, register     2 0.2030 0.1968
+      b, close     2 0.2001 0.1945
+          b, e     2 0.1308 0.1339
+          b, f     2 0.0920 0.1102
+             a     1 0.0489 0.0845
+   a, close, d     3 0.0385 0.0667
+          d, f     2 0.0333 0.0532
+          a, d     2 0.0284 0.0670
+d, f, register     3 0.0248 0.0451
+
+=== shuffled_within_case: 15 cases, 8 activities, max trace length 7
+-- apriori: 18 itemsets (1 s), train F1 0.498, test F1 0.387
+           itemset  size   mean    std
+    b, f, register     3 0.0639 0.1345
+             close     1 0.0575 0.1249
+       b, register     2 0.0534 0.1225
+b, close, register     3 0.0512 0.1193
+              b, d     2 0.0507 0.1139
+              b, f     2 0.0482 0.1147
+          b, close     2 0.0422 0.1019
+    b, d, register     3 0.0402 0.0967
+   close, register     2 0.0322 0.0878
+                 b     1 0.0314 0.0721
+-- impressed: 17 itemsets (1 s), train F1 0.498, test F1 0.387
+           itemset  size   mean    std
+              b, f     2 0.0591 0.1273
+          close, f     2 0.0472 0.1042
+           b, d, e     3 0.0435 0.0975
+          b, close     2 0.0416 0.1001
+    b, e, register     3 0.0364 0.0807
+                 b     1 0.0314 0.0721
+c, close, register     3 0.0290 0.0774
+              b, e     2 0.0284 0.0627
+          c, close     2 0.0254 0.0722
+              e, f     2 0.0131 0.0383
+
+=== shuffled_outcomes: 15 cases, 8 activities, max trace length 7
+-- apriori: 18 itemsets (1 s), train F1 0.498, test F1 0.420
+           itemset  size   mean    std
+b, close, register     3 0.0387 0.1084
+                 b     1 0.0384 0.0903
+    b, d, register     3 0.0329 0.0787
+          b, close     2 0.0313 0.0754
+              b, d     2 0.0306 0.0772
+       b, close, d     3 0.0282 0.0665
+       b, register     2 0.0280 0.0725
+                 a     1 0.0162 0.0639
+    b, f, register     3 0.0070 0.0192
+              b, f     2 0.0065 0.0257
+-- impressed: 15 itemsets (1 s), train F1 0.498, test F1 0.420
+       itemset  size   mean    std
+          b, e     2 0.0420 0.0956
+   a, b, close     3 0.0402 0.0902
+             b     1 0.0254 0.0686
+   b, register     2 0.0205 0.0812
+          a, b     2 0.0205 0.0579
+          b, d     2 0.0188 0.0686
+   close, d, f     3 0.0170 0.0419
+          d, f     2 0.0162 0.0368
+       b, c, e     3 0.0142 0.0549
+d, f, register     3 0.0100 0.0322
+
+Results: Project/code/results/importance
+python -u run_location_importance.py --evaluate-on train --top 10  941.79s user 27.28s system 106% cpu 15:08.13 total

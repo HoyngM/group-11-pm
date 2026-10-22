@@ -193,6 +193,26 @@ On BPIC11 f1 with the reference setting, `ac370000` and itemsets containing it a
 `{ac370000, ac379999}` is selected by IMPresseD. On the synthetic log the location of `b` is found; on the
 controls nothing is found when evaluating on the test cases.
 
+### Comparing the two strategies
+
+After `run_location_importance.py` has run for the BPIC11 logs (both `--evaluate-on train` and `--evaluate-on test`):
+
+```bash
+python compare_strategies.py                                 # BPIC11 f1-f3, train and test
+python compare_strategies.py --evaluate-on test --top-k 5    # other settings
+```
+
+Output in `results/importance/comparison/`:
+
+| File | Content |
+|---|---|
+| `comparison_metrics.csv` | Per dataset and setting: number of itemsets per strategy, shared itemsets (count and Jaccard), overlap of the top-k itemsets, Jaccard of the activities in the top-k, Spearman correlation of the mean F1 drop of the shared itemsets, best itemset per strategy, and how many IMPresseD-only itemsets beat the best Apriori itemset. |
+| `<dataset>_<train\|test>_top10.csv` | The top-k itemsets of both strategies side by side, with a flag whether the other strategy selected them too. |
+| `comparison_<train\|test>.png` | Mean F1 drop (and standard deviation) of the top 8 itemsets of each strategy, one panel per dataset. A missing marker means that strategy did not select the itemset. |
+
+The results of the full runs on BPIC11 f1-f3 (22 Oct), with an explanation of every number and the
+conclusions, are in `../contributions/job_oosterkamp/README.md`.
+
 ## Tests
 
 ```bash
@@ -206,11 +226,13 @@ main.py                         entry point of the itemset selection experiments
 config.yaml                     parameters of main.py
 run_location_importance.py      entry point of the location permutation importance
 importance_config.yaml          parameters of run_location_importance.py
+compare_strategies.py           compares the location importance of the Apriori and IMPresseD itemsets
 generate_data.py                synthetic log and shuffled controls -> data/synthetic/
 check_controls.py               checks the planted effect in the synthetic log and the controls
 data/                           BPIC11 logs, synthetic/ (generated), impressed_2023_test_log/ (22 patients)
 results/                        all outputs (ignored by git)
-location_permutation/           log preparation, reference permutation, cross-validated importance
+location_permutation/           log preparation, reference permutation, cross-validated importance,
+                                comparison of two strategies (comparison.py)
 synthetic_data/                 generator with planted effect, shuffle controls
 itemset_selection/
     event_log.py                EventLog: traces, labels, case attributes
