@@ -8,12 +8,14 @@ Steps (in this order, see pipeline/runner.py):
     compare     importance of the Apriori and the IMPresseD itemsets side by side -> results/comparison/
 
 Usage:
-    python main.py                                         # everything (about 20 minutes)
+    python main.py                                         # everything (20-25 minutes)
     python main.py --steps select importance compare       # only these steps
-    python main.py --datasets synthetic --evaluate-on test # one dataset, one setting (seconds)
-    python main.py --datasets BPIC11_f1 --repetitions 2 --max-itemsets 30   # quick look
+    python main.py --datasets synthetic --evaluate-on test --output-directory results_quick   # seconds
+    python main.py --datasets BPIC11_f1 --repetitions 2 --max-itemsets 30 --output-directory results_quick
 
 All parameters are in config.yaml; the options below only override some of them for one run.
+Only a plain ``python main.py`` reproduces the reported results. Give runs with fewer datasets or
+other settings their own --output-directory, otherwise they overwrite files in results/.
 """
 
 from __future__ import annotations

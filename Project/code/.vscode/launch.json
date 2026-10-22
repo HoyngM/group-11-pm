@@ -2,20 +2,20 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "1. Whole pipeline (about 20 min)",
+      "name": "1. Whole pipeline, reproduces the reported results (20-25 min)",
       "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/main.py",
       "console": "integratedTerminal", "cwd": "${workspaceFolder}"
     },
     {
       "name": "2. Synthetic log only, test cases (seconds)",
       "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/main.py",
-      "args": ["--steps", "select", "importance", "--datasets", "synthetic", "--evaluate-on", "test"],
+      "args": ["--datasets", "synthetic", "--evaluate-on", "test", "--output-directory", "results_quick"],
       "console": "integratedTerminal", "cwd": "${workspaceFolder}"
     },
     {
       "name": "3. BPIC11 f1 quick look (2 repetitions, 30 itemsets)",
       "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/main.py",
-      "args": ["--steps", "select", "importance", "--datasets", "BPIC11_f1", "--repetitions", "2",
+      "args": ["--datasets", "BPIC11_f1", "--repetitions", "2",
                "--max-itemsets", "30", "--evaluate-on", "test", "--output-directory", "results_quick"],
       "console": "integratedTerminal", "cwd": "${workspaceFolder}"
     },

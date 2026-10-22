@@ -9,7 +9,7 @@ This folder documents what was run, why, how to reproduce it, and what came out.
 > below (`run_location_importance.py`, `compare_strategies.py`, `importance_config.yaml`, ...)
 > no longer exist. Everything runs with `python main.py` and one `config.yaml`; see
 > "Merging the code into one system" at the end of this file and `Project/code/README.md`.
-> The pipeline was rerun after the merge: all 79 result files in `results/` came out byte for
+> The pipeline was rerun after the merge: all 79 CSV files in `results/` came out byte for
 > byte identical, so the numbers below are still exactly what the code produces. The **code** that was
 added lives in `Project/code/` (where it has to be, so that the project keeps one structure and one set of
 entry points). This folder only holds the **documentation, the results and the run logs**, because
@@ -62,7 +62,7 @@ From `Project/code/`:
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python main.py                                                    # about 20 minutes
+python main.py                                                    # 20-25 minutes
 python -m pytest
 ```
 
@@ -183,7 +183,22 @@ Checks after the merge:
   byte for byte identical to the run before the merge.
 * The synthetic data written by step `generate` is identical to the committed files, and step
   `check` gives the same correlations as before.
-* The selection gives the same numbers of itemsets (e.g. 174 / 32 on BPIC11 f1). Only the
-  selection report of the original `main.py` changed, because it now uses the cleaned log.
+* The selection gives the same itemsets as the importance used before (e.g. 174 / 32 on BPIC11 f1).
+  Only the selection report of the original `main.py` (`results/selection/summary.csv`) changed,
+  because it now uses the cleaned log. Measured by running the old `main.py` (commit `f06c250`):
+
+  | | old report | new report |
+  |---|---|---|
+  | BPIC11 f1: cases / activities / itemsets Apriori, Apriori 0.2-25, IMPresseD | 1140 / 176 / 186, 201, 31 | 1130 / 164 / 174, 189, 32 |
+  | BPIC11 f2 | 1140 / 218 / 228, 243, 54 | 1130 / 207 / 217, 232, 62 |
+  | BPIC11 f3 | 1121 / 167 / 171, 192, 27 | 1111 / 156 / 161, 181, 29 |
+  | SIM_rare_pair: IMPresseD itemsets, location recall, noise-only share | 69.9, 0.50, 0.461 | 68.8, 0.40, 0.445 |
+  | SIM_frequent_pair: same | 76.7, 0.50, 0.470 | 68.2, 0.50, 0.440 |
+
+  The BPIC11 numbers drop because the cleaning merges activity names that differ only in case,
+  spaces or `-`/`_`, and removes the cases with an activity that occurs only once. The Apriori
+  numbers of the simulated logs are unchanged. IMPresseD changes slightly there because the
+  cleaning sorts the cases by their id as text, so the 80% training split contains other cases.
+  None of the old numbers appear in `main.tex`.
 * 37 tests pass (4 new end-to-end tests of the pipeline in `tests/test_pipeline.py`), also in a
   fresh virtual environment installed from `requirements.txt`.

@@ -37,8 +37,8 @@ pip install -r requirements.txt
 python main.py
 ```
 
-This runs the five steps below in order, with the settings of `config.yaml`, and takes about
-20 minutes (most of it is step 4 on the BPIC11 logs). All output goes to `results/`.
+This runs the five steps below in order, with the settings of `config.yaml`, and takes 20-25
+minutes (most of it is step 4 on the BPIC11 logs). All output goes to `results/`.
 Afterwards, check the code with:
 
 ```bash
@@ -74,8 +74,8 @@ always reads the itemsets that step 3 saved, so both steps use exactly the same 
 
 ```bash
 python main.py --steps select importance compare               # only these steps
-python main.py --datasets synthetic --evaluate-on test         # one dataset, one setting (seconds)
-python main.py --steps select importance --datasets BPIC11_f1 --repetitions 2 --max-itemsets 30 --output-directory results_quick
+python main.py --datasets synthetic --evaluate-on test --output-directory results_quick   # seconds
+python main.py --datasets BPIC11_f1 --repetitions 2 --max-itemsets 30 --output-directory results_quick
 python main.py --steps compare                                 # redo the comparison only
 python main.py --config other_config.yaml                      # other parameters
 python main.py --help                                          # all options
@@ -83,6 +83,11 @@ python main.py --help                                          # all options
 
 The command line options only override `config.yaml` for one run. Steps 4 and 5 need the
 output of the earlier steps in the same output directory.
+
+**Only a plain `python main.py` reproduces the reported results.** A run with fewer datasets or
+other settings overwrites files in `results/` (for example `selection/summary.csv` then only holds
+the chosen datasets), so give such runs their own `--output-directory`, as above.
+Folders named `results_*` are ignored by git.
 
 ## Data
 
