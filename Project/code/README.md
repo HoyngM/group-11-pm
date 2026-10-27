@@ -2,27 +2,26 @@
 
 Group 11, Process Mining (JM0211): *Explainable Predictive Process Monitoring*.
 
-This folder contains the code of the reproduction of
-Vazifehdoostirani et al. (2024), *Uncovering the Hidden Significance of Activities
-Location in Predictive Process Monitoring*. The method measures how much the
-location of a set of activities (an *itemset*) matters for an outcome prediction
-model. Which itemsets to test is decided by a selection strategy. Two strategies
-are implemented here, and both return plain activity sets:
+This folder reproduces the location permutation importance of Vazifehdoostirani et al. (2024),
+*Uncovering the Hidden Significance of Activities Location in Predictive Process Monitoring*,
+and adds a variant for choosing which activity sets (*itemsets*) are tested:
 
 | Strategy | Source | Idea |
 |---|---|---|
-| `apriori` (baseline) | Vazifehdoostirani et al. (2024) | Every single activity plus the `top_k` most frequent itemsets found with Apriori. |
-| `impressed` (variant) | Vazifehdoostirani et al. (2023), IMPresseD | Start with single activities, keep the Pareto front of three interest functions (case coverage, outcome information gain, case distance), extend those patterns by one activity, repeat up to length 3. Ordering relations are dropped afterwards. |
+| `apriori` (baseline) | Vazifehdoostirani et al. (2024) | Every single activity plus the `top_k` most frequent itemsets (Apriori, `mlxtend`, as in the authors' code). |
+| `impressed` (variant) | Vazifehdoostirani et al. (2023), IMPresseD | Port of the automatic mode of the authors' IMPresseD tool: score patterns on outcome interest, frequency and case distance, keep the Pareto front, extend those patterns by one event, repeat up to length 3. Ordering relations are dropped afterwards. |
 
-The itemset selection is run with `main.py`. The location permutation and the prediction
-model (XGBoost) are in `location_permutation/` and run with `run_location_importance.py`
-(see "Synthetic data and location permutation importance" below). That script is a
-reimplementation of the reference code of the authors; check it against the pipeline of
-the other group members before submitting, so that only one version is left.
+For every itemset, the location importance is the drop in weighted F1 of an XGBoost model when the
+location of the itemset is permuted (5-fold cross-validation, 10 repetitions). The code follows
+the authors' repositories, <https://github.com/MozhganVD/PermutationLocationImportance> and
+<https://github.com/MozhganVD/InteractivePatternDetection>: the same file, class and function names
+(in PEP 8 style), with our additions for the assignment in `extensions/`. Event logs are loaded,
+cleaned and queried with [pm4py](https://pm4py.fit.fraunhofer.de/). Every difference with the
+authors' code is listed in [`DIFFERENCES.md`](./DIFFERENCES.md).
 
 ## Installation
 
-Python 3.10 or newer is required. From the folder that contains this README:
+Python 3.10 or newer. From the folder that contains this README (`Project/code`):
 
 ```bash
 python -m venv .venv
@@ -30,223 +29,215 @@ source .venv/bin/activate          # Windows (PowerShell): .venv\Scripts\Activat
 pip install -r requirements.txt
 ```
 
-## Running the experiments
+Tested with Python 3.14 and pm4py 2.7.23, mlxtend 0.25.0, paretoset 1.2.5, networkx 3.7,
+xgboost 3.4.1, scikit-learn 1.9.1, pandas 3.1.0, numpy 2.5.4, scipy 1.18.1, matplotlib 3.11.2.
+
+## Running
 
 ```bash
 python main.py
 ```
 
-This reads `config.yaml`, runs both strategies (and a second Apriori setting) on
-
-* the three BPIC11 logs in `data/` (taken from
-  <https://github.com/MozhganVD/PermutationLocationImportance/tree/master/datasets>), and
-* two simulated scenarios (10 random logs each) in which the location of
-  activities determines the outcome,
-
-and writes everything to `results/` (about 1 minute). Useful options:
+This is the only entry point. It reads `config.yaml` and, for each of the six datasets
+(three BPIC11 logs, the synthetic log and two shuffled controls) and each of the three
+strategies, selects the itemsets, measures their location importance and writes the results
+to `results/`. It then runs the selection on the simulated logs and compares it with the
+planted itemsets. The full run is long: on a laptop one BPIC11 log takes 7 to 11 minutes with
+`apriori` and 25 minutes or more with `impressed`; with the sensitivity setting
+`apriori_support0.2_top25` and laptop sleep our run took about 67 hours of wall-clock time. Use
+`--datasets` and `--strategies` to run parts. Options:
 
 ```bash
-python main.py --datasets BPIC11_f1                 # only selected datasets or scenarios
-python main.py --config my_config.yaml              # other parameters
-python main.py --output-directory results_test      # other output folder
+python main.py --datasets synthetic                                  # selected datasets or scenarios
+python main.py --strategies apriori impressed                        # selected strategies
+python main.py --datasets BPIC11_f1 --n-repeats 2 --max-itemsets 20  # quick look
+python main.py --k-fold 3 --output-directory results_test            # other settings / folder
+python -m pytest                                                     # unit tests (about 30 s)
 ```
 
-All parameters (support, `top_k`, pattern length, case attributes, number of
-simulated logs, seeds, ...) are in `config.yaml`; nothing needs to be edited in
-the code. Itemsets are always selected on the training part of a stratified
-train/test split (`test_size`, `seed`), so that the labels of the test cases do not
-influence which itemsets are chosen.
+All parameters are in `config.yaml`; nothing has to be changed in the code. The data are in
+`data/`: the BPIC11 logs come from the reference repository, and `data/synthetic/` is created by
+`python generate_data.py` (already included; only needed to regenerate it, see below).
 
 ### Output
 
 | File | Content |
 |---|---|
-| `results/summary.csv` | One row per dataset (and per simulated log): sizes of the selections, overlap between strategies, recall against the gold standard for simulated logs. |
-| `results/summary_simulated_mean.csv` | The simulated rows averaged per scenario. |
-| `results/<dataset>/<strategy>_itemsets.json` | The selected itemsets: input for the permutation importance. |
-| `results/<dataset>/<strategy>_details.csv` | Why they were selected, e.g. the patterns with their three interest values. |
-| `results/simulated/<log>.csv`, `<log>_gold.json` | The simulated event logs and which itemsets we planted. |
+| `results/summary.csv` | One row per dataset and strategy: log size, number and sizes of the itemsets, overlap with the `apriori` selection, mean train/test F1 of the model, the most important itemset. |
+| `results/<dataset>/<strategy>_itemsets.json` | The selected itemsets. |
+| `results/<dataset>/<strategy>_details.csv` | Why they were selected: support (Apriori) or the patterns with their three interest values (IMPresseD). |
+| `results/<dataset>/<strategy>_location_importance.csv` | All importance values: one column per itemset, 50 rows (5 folds x 10 repetitions), as in the reference output. |
+| `results/<dataset>/<strategy>_summary.csv` | Mean and standard deviation of the importance per itemset, most important first. |
+| `results/<dataset>/<strategy>_boxplot.png` | Box plot of the 20 most important itemsets. |
+| `results/<dataset>/<strategy>_fold_scores.csv` | Train and test F1 of the model per fold. |
+| `results/<dataset>/<strategy>_excluded_itemsets.json` | Selected itemsets that were not permuted because they contain a fixed-location activity (see below). |
+| `results/simulated/summary_simulated_mean.csv` | Recall of the planted itemsets per scenario and strategy, averaged over 10 simulated logs. |
 
-## Using a strategy from other code
+## Code and how it maps to the authors' repositories
 
-```python
-from itemset_selection import EventLog, ImpressedItemsetSelector
-
-log = EventLog.from_csv(
-    "data/BPIC11_f1_trunc36.csv",
-    numeric_attributes=["Age"],
-    categorical_attributes=["Diagnosis", "Diagnosis code", "Specialism code", "Treatment code"],
-)
-train, test = log.stratified_split(test_size=0.2, seed=42)
-
-result = ImpressedItemsetSelector(max_pattern_length=3, numeric_attributes=["Age"],
-                                  categorical_attributes=["Diagnosis"]).select(train)
-for itemset in result.itemsets:       # list of frozensets of activity names
-    print(sorted(itemset))
-```
-
-`AprioriItemsetSelector` has the same interface (`select(log) -> SelectionResult`).
-
-## Synthetic data and location permutation importance
-
-This part belongs to the evaluation: a small synthetic log with a planted location effect, shuffled negative
-controls, and the 5-fold location permutation importance that compares the Apriori and IMPresseD itemsets.
-The commands below are run from this folder, after the installation above.
-
-### Idea
-
-A shuffled copy of existing data is **not** proof that the algorithm works: shuffling destroys the
-structure the algorithm looks for, so a correct implementation should find (almost) nothing there.
-We therefore use two things:
-
-1. **A synthetic log with a planted pattern** (ground truth). Activity `B` occurs in *every* case, only its
-   location differs: early in the trace gives label 0, late gives label 1 (10% label noise). Apriori cannot see
-   this (frequency of `B` is 100%); a location-aware method can. The other activities are noise.
-2. **Three shuffled copies as negative controls**, in exactly the same format:
-
-| File | Shuffle | What is destroyed |
+| Our file | Authors' file | Content |
 |---|---|---|
-| `data/synthetic/synthetic.csv` | none | (original, planted effect present) |
-| `data/synthetic/shuffled_within_case.csv` | activities permuted inside each case | order and location |
-| `data/synthetic/shuffled_outcomes.csv` | labels permuted over the cases | link between trace and outcome |
-| `data/synthetic/shuffled_across_traces.csv` | activity column permuted over all events | patterns and activity sets |
+| `main.py` | — | The only entry point; class `Experiment` runs every dataset and strategy of `config.yaml`. |
+| `tools.py` | `tools.py` (permutation repo) | Class `DataManager`: `_load_df`, `frequent_activity_sets`, `split_test_train`, `cross_split_test_train`, `index_encoding`, `trace_permutation_importance`, `itemset_permutation_importance`, `shuffle_sequence`, `find_itemset_indexes`. |
+| `cross_validation_process_permutation.py` | `CrossValidation_ProcessPermutation.py` | The k-fold loop: XGBoost per fold, F1 drop per itemset. |
+| `plotting_results.py` | `Plotting_results.py` | Summary tables and box plots. |
+| `imipd.py` | `IMIPD.py`, `tools.py` (IMPresseD repo) | `create_patient_data`, `calculate_pairwise_case_distance`, `create_pattern_attributes` and the three `*_measuring_patterns`, `trace_graph_generator`, `create_embedded_pattern_in_trace`, `update_pattern_dict`, `pattern_extension`, `single_pattern_extender`. |
+| `auto_impid.py` | `Auto_IMPID.py` | `auto_stepwise_ppd`: the automatic pattern discovery. |
+| `extensions/itemset_selection.py` | — | `AprioriSelector` and `ImpressedSelector` behind one interface. |
+| `extensions/synthetic_log.py`, `shuffle_controls.py` | — | Synthetic log with a planted location effect and its shuffled controls. |
+| `extensions/simulation.py`, `evaluation.py` | — | Simulated logs with a gold standard; overlap and recall of the selections. |
+| `generate_data.py` | — | (Re)creates `data/synthetic/`. |
 
-The column layout (`case:concept:name`, `concept:name`, `time:timestamp`, `event_nr`, `Age`, `Category`,
-`label`) matches the BPIC11 files used by `data/BPIC11_*.csv`, so the same code runs on these files without changes.
+The runtime flow of `main.py` is shown in [`main_flowchart.mmd`](./main_flowchart.mmd).
 
-### Running the synthetic data and the checks
+## Method and implementation choices
+
+The main points; [`DIFFERENCES.md`](./DIFFERENCES.md) has the complete list with reasons.
+
+### Event log (`tools.py`, `DataManager._load_df`)
+
+The CSV is loaded into a pm4py dataframe (`pm4py.format_dataframe`). Cleaning follows the reference:
+activity names are lower-cased and stripped of spaces, `-` and `_`, and cases with an activity that
+occurs fewer than twice in the log are removed (`pm4py.get_event_attribute_values`,
+`pm4py.filter_event_attribute_values`). Traces come from `pm4py.project_on_event_attribute` and the
+observed locations of every activity (`allowed_locations`, the feasible targets of a permutation)
+from `pm4py.get_activity_position_summary`.
+
+The BPIC11 timestamps only have a date: 89% of consecutive events in a case share their timestamp.
+The traces are therefore treated as **totally ordered by `event_nr`** (the event number is used as
+the time), so there is no concurrency.
+
+### Apriori (`tools.py`, `DataManager.frequent_activity_sets`)
+
+The multi-activity itemsets are chosen exactly as in the reference (`mlxtend` Apriori, `min_support`
+0.5, `top_k` 10). As in the paper, every single activity is analysed as well. `max_length` is 3, the
+same as the longest IMPresseD pattern. The setting with support 0.2 and the top 25 itemsets is run as a
+sensitivity check. Apriori ignores the labels and selects on all cases.
+
+### IMPresseD (`auto_impid.py`, `imipd.py`)
+
+A port of the automatic mode of the authors' tool with the same interest functions (information gain
+via `mutual_info_classif`, case support, mean case distance between cases with and without the
+pattern), the same `paretoset` selection and the same extension rules. Patterns with an eventual
+relation are not extended further, as in the tool. The selection uses the training part of a
+stratified 80/20 split (seed 42), because the outcome interest uses the labels. Differences with the tool:
+
+* **Total order.** The concurrency rule never applies (see above) and is left out.
+* **No "direct context" rule.** Every step adds exactly one event: `max_extension_step: 2` gives
+  pattern lengths 1, 2 and 3.
+* **Case distance on the case attributes only** (`Age`, `Diagnosis`, `Diagnosis code`,
+  `Specialism code`, `Treatment code`), as defined in the paper. The tool also counts every
+  per-activity frequency column as a categorical attribute.
+* **Pattern identity** is checked with an exact key for chain patterns instead of a graph isomorphism
+  test against every known pattern. The result is the same; it is much faster.
+* `max_gap_between_events` (the tool asks the user for it) is 1000, i.e. no limit.
+
+### Location permutation importance (`cross_validation_process_permutation.py`, `tools.py`)
+
+Index-based one-hot encoding, XGBoost with default parameters, 5-fold stratified cross-validation,
+10 repetitions, weighted F1, permutation seed 2023, feasibility constraint (only observed locations).
+Single activities use `trace_permutation_importance` (importance 0 when fewer than 3 cases change),
+larger itemsets `itemset_permutation_importance` with `shuffle_sequence`, which keeps the order of
+the activities of an itemset. Following the method as described in the papers, we correct three
+implementation issues of the authors' code (DIFFERENCES.md, P4 to P6):
+
+* The F1 drop is measured on the **held-out test cases** of each fold, not on the training cases,
+  which the model has largely memorised.
+* Every itemset and repetition starts from the **original traces**; in the authors' code the
+  permutations pile up over itemsets and repetitions.
+* The **order** inside an itemset is always kept; a bookkeeping error in the authors' shuffle
+  sometimes moved the wrong event and broke the order.
+
+The fold split is seeded as well (`seed` 42; the authors' code sets none), so that the results are
+reproducible.
+
+**Fixed-location activities.** An activity whose every occurrence is at the same position, counted
+from the start (e.g. `register`, always first) or from the end (e.g. `close`, always last, whatever the
+trace length), cannot have an important location, and moving it would create unrealistic traces. Such
+activities are detected from the data (`DataManager.fixed_location_activities`), and every itemset that
+contains one is left out of the permutation (`exclude_fixed_locations` in `config.yaml`; the excluded
+itemsets are listed in `<strategy>_excluded_itemsets.json`). On BPIC11 this only concerns a few rare
+activities with one or two events, which the feasibility constraint could not move anyway.
+
+On a synthetic log of 200 cases (unit tests) the planted activity `b` gets a mean F1
+drop of about 0.43 and a noise activity about 0.09, while in the two shuffled controls no itemset
+gets more than 0.1 in absolute value.
+
+### Check against the authors' code
+
+Before the three corrections, the port was compared with the authors' own functions, run on the same
+data: the observed locations, the case order and the Apriori itemsets on BPIC11 f1 are identical; with
+the same random draws 355 of 355 itemset shuffles and 218 of 218 activity shuffles are identical; and
+the IMPresseD Pareto patterns are identical on the synthetic log (18 patterns) and on a simulated log
+of 300 cases (109 patterns). With the corrected shuffle, 330 of the 355 itemset shuffles are still
+identical; in the other 25 the authors' shuffle moved a wrong event, and in 9 of those it broke the
+order of the itemset.
+
+## Synthetic data and negative controls
+
+`data/synthetic/synthetic.csv` (100 events, 15 cases) contains a planted location effect: activity `B`
+occurs in *every* case and only its location differs, early (label 0) or late (label 1), with 10% label
+noise. Apriori cannot see this (the frequency of `B` is 100%); a location-aware method can. Two shuffled
+copies serve as negative controls: `shuffled_within_case.csv` (activities permuted inside each case, so
+location is gone) and `shuffled_outcomes.csv` (labels permuted over the cases). The unit tests check on a
+larger log of 200 cases that the location of `B` correlates with the label only in the original log.
 
 ```bash
-python generate_data.py            # writes the four CSV files to data/synthetic/
-python check_controls.py           # planted effect present in synthetic, absent in the controls
-python -m pytest                   # all unit tests
+python generate_data.py                       # regenerate data/synthetic/ (seed 42, 100 events)
+python generate_data.py --cases 400 --seed 7  # a larger log, written to the same folder
 ```
 
-Options: `python generate_data.py --events 200 --seed 7 --label-noise 0.2 --output-directory other_folder`.
+The simulated logs (`extensions/simulation.py`, section `simulation` in `config.yaml`) plant two
+location effects (`x`, and the pair `p q`) and one existence effect (`y`) in 1000 cases. They test
+whether a strategy selects the planted itemsets at all.
 
-#### Expected output of `check_controls.py` (seed 42, 15 cases = 100 events)
+## Results
 
-Spearman correlation between the relative position of `B` in a case and the label:
+**The location importance must be rerun** with the corrected permutation (previous section); the
+importance values of the previous run (F1 drop on training cases, permutations piling up) are no longer
+reported here. The selection results and the model scores below do not depend on the permutation and
+stay valid. All numbers are in `results/summary.csv` and `results/<dataset>/`.
 
-| log | cases with B | Spearman | p-value |
-|---|---|---|---|
-| synthetic | 15/15 | 0.745 | 0.0014 |
-| shuffled_within_case | 15/15 | 0.016 | 0.96 |
-| shuffled_outcomes | 15/15 | 0.308 | 0.26 |
-| shuffled_across_traces | 10/15 | -0.305 | 0.39 |
+**Itemsets and model.**
 
-### Location permutation importance (BPIC11 and synthetic logs)
+| Dataset | Cases | Model F1 train / test | Itemsets apriori (sizes 1/2/3) | Itemsets impressed (sizes 1/2/3) | Overlap of 2+ itemsets (Jaccard) |
+|---|---|---|---|---|---|
+| BPIC11 f1 | 1130 | 0.994 / 0.907 | 174 (164/7/3) | 154 (18/88/48) | 0.02 |
+| BPIC11 f2 | 1130 | 0.994 / 0.895 | 217 (207/7/3) | 176 (35/83/58) | 0.02 |
+| BPIC11 f3 | 1111 | 0.995 / 0.934 | 161 (156/4/1) | 142 (22/82/38) | 0.00 |
 
-`location_permutation/` reimplements the pipeline of Vazifehdoostirani et al. (2024) after the reference code
-(<https://github.com/MozhganVD/PermutationLocationImportance>): same log cleaning, index-based one-hot encoding,
-XGBoost with default parameters, 5-fold stratified cross-validation, 10 repetitions, weighted F1, and the
-authors' `shuffle_sequence` / `find_itemset_indexes` permutation (feasibility + order constraint). Single
-activities use the reference `trace_permutation_importance`, itemsets with 2 or 3 activities use the itemset
-permutation. The itemsets come from the group's Apriori and IMPresseD selectors
-(`itemset_selection/`).
+Apriori and IMPresseD select almost entirely different multi-activity itemsets.
 
-```bash
-python run_location_importance.py                                   # all datasets in importance_config.yaml
-python run_location_importance.py --datasets synthetic              # selected datasets only
-python run_location_importance.py --datasets BPIC11_f1 --repetitions 2 --max-itemsets 30   # quick look
-python run_location_importance.py --evaluate-on test                # F1 drop on the held-out cases
-```
+**Synthetic log and controls (15 cases).** The model's test F1 is 0.65 on the synthetic log and 0.39 /
+0.42 on the two controls: the planted location effect is learnable, the controls carry no signal.
 
-Output per dataset in `results/importance/<dataset>/evaluated_on_<train|test>/`: `<strategy>_location_importance.csv`
-(one column per itemset, 50 rows = 5 folds x 10 repetitions), `<strategy>_summary.csv`, `<strategy>_boxplot.png`,
-`<strategy>_fold_scores.csv`. The unit tests compare nothing with the reference output, but the permutation was
-checked once against the reference function: with the same random draws, 300 of 300 shuffles were identical.
-
-#### Choices that are not obvious (`importance_config.yaml`)
-
-| Setting | Default | Why |
-|---|---|---|
-| `evaluate_on` | `train` | The reference code measures the F1 drop on the **training** cases of each fold. The model has memorised them (train F1 = 1.0), so any permutation lowers F1: in the label-shuffled control the top "importance" is 0.38. `test` gives the clean picture (about 0 on the controls) and fits the paper text better. Report which one you use. |
-| `exact_tracking` | `false` | The reference `shuffle_sequence` has an off-by-one in its position bookkeeping, so the order inside an itemset is not always kept. `true` fixes this, with the same random draws. |
-| `accumulate_permutations` | `false` | The reference code never resets the permuted traces, so shuffles pile up over itemsets and repetitions. `false` starts every repetition from the original traces, as the paper describes. |
-| `select_on` | Apriori `all`, IMPresseD `training_split` | Apriori ignores the labels. IMPresseD uses them, so it selects on 80% of the cases (open question 5 in `PLAN.md`). |
-
-Other differences with the reference: `random_state` is fixed everywhere (folds, model), the random draws come
-from `numpy.random.default_rng`, and unchanged cases are not predicted again (same result, faster).
-
-#### Results (seed 42, 5 folds x 10 repetitions)
-
-Top itemset by mean F1 drop:
-
-| dataset | evaluated on | Apriori | IMPresseD |
-|---|---|---|---|
-| BPIC11 f1 | train | ac370000 (0.057) | ac370000 (0.058) |
-| BPIC11 f1 | test | ac370000, ac370442, ac370443 (0.007) | 376400, ac370000 (0.005) |
-| synthetic (100 events) | train | b, close, register (0.240) | b (0.228) |
-| synthetic (100 events) | test | b, register (0.228) | b, register (0.231) |
-| shuffled_within_case | train | b, f, register (0.064) | b, f (0.059) |
-| shuffled_within_case | test | b, close, register (0.003) | b, close, e (0.013) |
-| shuffled_outcomes | train | b, close, register (0.039) | b, e (0.042) |
-| shuffled_outcomes | test | c (0.047) | b, d (0.020) |
-
-With only 15 cases the result is noisy: the standard deviation over folds and repetitions (0.2-0.3) is as large as the
-mean, because every test fold holds 3 cases. The separation is still visible (synthetic 0.23 against at most 0.06 on
-the controls). With 400 cases (`python generate_data.py --cases 400`) `b` drops F1 by 0.41 on the test cases and
-the controls stay near 0 (top drop at most 0.02); that run takes 2-5 s as well.
-
-On BPIC11 f1 with the reference setting, `ac370000` and itemsets containing it are most important, as in the paper;
-`{ac370000, ac379999}` is selected by IMPresseD. On the synthetic log the location of `b` is found; on the
-controls nothing is found when evaluating on the test cases.
-
-## Tests
-
-```bash
-python -m pytest
-```
+**Simulated logs (10 logs per scenario).** All strategies find the existence effect `y` in every log.
+The location effect `x` is selected in every log, except by IMPresseD in the rare-pair scenario (8 of
+10 logs). No strategy selects the planted pair `{p, q}` in any log: selection on frequency (Apriori)
+or on the presence of patterns (IMPresseD) cannot see a pair whose location, not its presence, matters.
+IMPresseD selects fewer pure-noise itemsets (share 0.50 against 0.73 for Apriori).
 
 ## Project structure
 
 ```
-main.py                         entry point of the itemset selection experiments
-config.yaml                     parameters of main.py
-run_location_importance.py      entry point of the location permutation importance
-importance_config.yaml          parameters of run_location_importance.py
-generate_data.py                synthetic log and shuffled controls -> data/synthetic/
-check_controls.py               checks the planted effect in the synthetic log and the controls
-data/                           BPIC11 logs, synthetic/ (generated), impressed_2023_test_log/ (22 patients)
-results/                        all outputs (ignored by git)
-location_permutation/           log preparation, reference permutation, cross-validated importance
-synthetic_data/                 generator with planted effect, shuffle controls
-itemset_selection/
-    event_log.py                EventLog: traces, labels, case attributes
-    selector.py                 ItemsetSelector interface, SelectionResult
-    apriori_selector.py         baseline strategy
-    impressed_selector.py       IMPresseD strategy (pattern discovery loop)
-    pattern.py                  patterns, instances and the four extension rules
-    interest.py                 the three interest functions
-    case_distance.py            distance between cases for the case-distance interest
-    pareto.py                   Pareto front
-    simulation.py               simulated logs with a planted location effect
-    evaluation.py               overlap between strategies, recall against the gold standard
-    experiment.py               runs the configured experiments
-tests/                          unit tests
+main.py                                   the only entry point (class Experiment)
+config.yaml                               all parameters
+tools.py                                  DataManager (log, Apriori, encoding, permutation)
+cross_validation_process_permutation.py   k-fold location permutation importance
+plotting_results.py                       tables and box plots
+imipd.py                                  IMPresseD functions (interests, pattern extension)
+auto_impid.py                             automatic IMPresseD discovery
+generate_data.py                          (re)creates data/synthetic/
+requirements.txt
+DIFFERENCES.md                            differences with the authors' repositories
+data/                                     BPIC11 logs, synthetic/ (synthetic log and two controls)
+results/                                  all outputs (ignored by git)
+extensions/                               our additions for the assignment
+    itemset_selection.py                  AprioriSelector, ImpressedSelector
+    synthetic_log.py, shuffle_controls.py synthetic log and negative controls
+    simulation.py, evaluation.py          simulated logs, gold standard, overlap and recall
+tests/                                    unit tests (python -m pytest)
 ```
-
-## Design decisions and simplifications
-
-* **Totally ordered traces.** IMPresseD works on partially ordered traces. The BPIC11
-  logs contain no information about concurrency, so every trace is totally
-  ordered. The rule for concurrent events therefore never applies, and the four
-  remaining rules are directly/eventually following/preceding. An *eventual*
-  relation needs at least one event in between.
-* **Patterns with an eventual relation are not extended further** (`extend_eventual_patterns:
-  false`), as in the reference implementation of the IMPresseD authors.
-* **Outcome interest** is the information gain between the label and the
-  per-case instance count of a pattern (scikit-learn `mutual_info_score`).
-  **Case distance** is the mean distance between cases with and without the pattern.
-  The distance of two cases is `(normalised Euclidean + m * Jaccard) / (m + 1)` over
-  their case attributes, as defined in the IMPresseD paper (`m` = number of
-  categorical attributes).
-* **No time gap constraint** between the events of a pattern.
-* **Apriori baseline.** The paper analyses all single activities and the top 10 frequent
-  itemsets with more than one activity. The default `min_support` of 0.5 is the
-  default of the authors' code. Because the IMPresseD variant is limited to length 3,
-  `max_length` is 3 for Apriori as well.
 
 ## References
 

@@ -6,9 +6,8 @@ occurs in 100% of the cases, frequency-based methods such as Apriori cannot
 see the effect, while a location-aware method can. The remaining activities
 are noise in random order, so they carry no information about the outcome.
 
-The column layout follows the BPIC11 files used by the group's itemset
-selection code (``case:concept:name``, ``concept:name``, ``label``,
-``event_nr``), so the output can be read without any adjustment.
+The column layout follows the BPIC11 files (``case:concept:name``, ``concept:name``,
+``label``, ``event_nr``), so the output can be read without any adjustment.
 """
 
 from __future__ import annotations
@@ -18,9 +17,10 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
+# Column names of the generated log.
 CASE, ACTIVITY, TIMESTAMP, ORDER = "case:concept:name", "concept:name", "time:timestamp", "event_nr"
 LABEL = "label"
-KEY_ACTIVITY = "B"
+KEY_ACTIVITY = "B"  # the activity whose location decides the outcome
 
 
 @dataclass
@@ -41,7 +41,11 @@ class GeneratorConfig:
 
 
 class SyntheticLogGenerator:
-    """Creates a labelled event log with a planted location effect of ``B``."""
+    """Creates a labelled event log with a planted location effect of ``B``.
+
+    Args:
+        config: parameters of the log; the defaults give 100 events.
+    """
 
     def __init__(self, config: GeneratorConfig | None = None) -> None:
         self.config = config or GeneratorConfig()
@@ -67,14 +71,16 @@ class SyntheticLogGenerator:
         if not plans:
             raise ValueError(f"{config.target_events} events cannot be built from traces of length "
                              f"{[k + overhead for k in sizes]}")
+        # Pick one of the possible plans at random and shuffle the order of the cases.
         counts = plans[int(self.rng.integers(len(plans)))]
         others = [k for k, count in zip(sizes, counts) for _ in range(count)]
         return [int(k) for k in self.rng.permutation(others)]
 
     @staticmethod
     def _compositions(total: int, lengths: list[int], prefix: tuple[int, ...] = ()):
-        """All tuples of non-negative counts c with sum(c_i * lengths_i) == total."""
+        """All tuples of non-negative counts c with sum(c_i * lengths_i) == total (recursive generator)."""
         if len(prefix) == len(lengths) - 1:
+            # Last length: the remaining events must be an exact multiple of it.
             remainder = total - sum(c * n for c, n in zip(prefix, lengths))
             if remainder >= 0 and remainder % lengths[-1] == 0:
                 yield (*prefix, remainder // lengths[-1])
@@ -84,6 +90,7 @@ class SyntheticLogGenerator:
             yield from SyntheticLogGenerator._compositions(total, lengths, (*prefix, count))
 
     def _generate_case(self, index: int, number_of_others: int) -> list[dict]:
+        """The event rows of one case: B early (label 0) or late (label 1), with label noise."""
         config = self.config
         late = self.rng.random() < config.share_late
         trace = self._build_trace(late, number_of_others)
@@ -98,6 +105,7 @@ class SyntheticLogGenerator:
             "Category": str(self.rng.choice(["X", "Y", "Z"])),
             LABEL: label,
         }
+        # One case per day, one event per hour.
         start = pd.Timestamp("2026-01-01") + pd.Timedelta(days=index)
         return [
             {

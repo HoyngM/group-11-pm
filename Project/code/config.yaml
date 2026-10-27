@@ -1,61 +1,86 @@
-# Configuration of the itemset selection experiments.
-# All paths are relative to this file.
+# Configuration of main.py. All paths are relative to this file.
 
-seed: 42                 # random seed for the train/test split and the simulated logs
-test_size: 0.2           # share of cases held out; itemsets are selected on the rest
 output_directory: results
+seed: 42                  # train/test split, cross-validation folds and simulated logs
+test_size: 0.2            # share of cases kept out of a selection with select_on: training_split
+frq_threshold: 2          # cases with an activity that occurs fewer times in the log are removed
 
 # Column names in the CSV event logs (BPIC11 files of Vazifehdoostirani et al.).
 columns:
   case: case:concept:name
   activity: concept:name
   label: label
-  order: event_nr
+  order: event_nr          # position of the event in its case; used as the event order
 
-# Case-level attributes for the case-distance interest function of IMPresseD.
-case_attributes:
-  numeric: [Age]
-  categorical: [Diagnosis, Diagnosis code, Specialism code, Treatment code]
+# Location permutation importance.
+importance:
+  k_fold: 5                # stratified cross-validation folds
+  n_repeats: 10            # permutations per itemset and fold
+  constrain: true          # only move activities to locations at which they were observed
+  random_state: 2023       # seed of the permutations
+  exclude_fixed_locations: true  # skip itemsets with an activity that is always at the same position
+                                 # (counted from the start or the end, e.g. a start or end activity)
 
+# Event logs. case_attributes are used by the case-distance interest of IMPresseD.
+# The synthetic and shuffled_* files are made by generate_data.py.
 datasets:
   - name: BPIC11_f1
     path: data/BPIC11_f1_trunc36.csv
+    case_attributes:
+      numeric: [Age]
+      categorical: [Diagnosis, Diagnosis code, Specialism code, Treatment code]
   - name: BPIC11_f2
     path: data/BPIC11_f2_trunc40.csv
+    case_attributes:
+      numeric: [Age]
+      categorical: [Diagnosis, Diagnosis code, Specialism code, Treatment code]
   - name: BPIC11_f3
     path: data/BPIC11_f3_trunc31.csv
+    case_attributes:
+      numeric: [Age]
+      categorical: [Diagnosis, Diagnosis code, Specialism code, Treatment code]
+  - name: synthetic
+    path: data/synthetic/synthetic.csv
+    case_attributes: {numeric: [Age], categorical: [Category]}
+  - name: shuffled_within_case
+    path: data/synthetic/shuffled_within_case.csv
+    case_attributes: {numeric: [Age], categorical: [Category]}
+  - name: shuffled_outcomes
+    path: data/synthetic/shuffled_outcomes.csv
+    case_attributes: {numeric: [Age], categorical: [Category]}
 
-# Strategies that choose the itemsets. The first one is the reference that the
-# others are compared with.
+# Strategies that choose the itemsets (extensions/itemset_selection.py). The first one is the
+# reference that the others are compared with. select_on: all -> all cases (Apriori ignores the
+# labels); training_split -> only the training part of a stratified split (IMPresseD uses the labels).
 strategies:
-  # Baseline of the original paper: Apriori with the default settings of the authors.
+  # Baseline of the paper: every single activity plus the top_k frequent itemsets.
   - name: apriori
     type: apriori
-    min_support: 0.5     # fraction of cases that must contain the itemset
-    top_k: 10            # number of multi-activity itemsets that are kept
-    max_length: 3        # largest itemset size (same as the IMPresseD variant)
-    singletons: all      # all | frequent | none
+    select_on: all
+    min_support: 0.5       # share of cases that must contain the itemset
+    top_k: 10              # number of multi-activity itemsets that are kept
+    max_length: 3          # largest itemset size, the same as for IMPresseD
   # Sensitivity of the baseline: lower support, more itemsets.
   - name: apriori_support0.2_top25
     type: apriori
+    select_on: all
     min_support: 0.2
     top_k: 25
     max_length: 3
-    singletons: all
-  # Variant: pattern extraction of IMPresseD (Pareto front of the interest functions).
+  # Variant: Pareto-optimal patterns of IMPresseD (automatic mode), ordering relations dropped.
   - name: impressed
     type: impressed
-    max_pattern_length: 3  # pattern lengths 1, 2 and 3
-    extend_eventual_patterns: false
+    select_on: training_split
+    max_extension_step: 2        # extension steps after the single activities: pattern lengths 1, 2 and 3
+    max_gap_between_events: 1000 # eventual relations: furthest event that may be related (1000 = no limit)
 
 # Simulated logs in which the location of activities determines the outcome.
+# Only the selection is run on them and compared with the planted itemsets.
 simulation:
-  repetitions: 10        # logs per scenario, with seeds seed, seed+1, ...
-  case_attributes:
-    numeric: [Age]
-    categorical: [Category]
-  scenarios:
-    - name: SIM_rare_pair       # the pair P,Q occurs in 30% of the cases
+  repetitions: 10          # logs per scenario, with seeds seed, seed+1, ...
+  case_attributes: {numeric: [Age], categorical: [Category]}
+  scenarios:               # each scenario overrides fields of SimulationConfig (extensions/simulation.py)
+    - name: SIM_rare_pair       # the pair p,q occurs in 30% of the cases
       share_with_pair: 0.3
-    - name: SIM_frequent_pair   # the pair P,Q occurs in 60% of the cases
+    - name: SIM_frequent_pair   # the pair p,q occurs in 60% of the cases
       share_with_pair: 0.6

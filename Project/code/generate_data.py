@@ -1,5 +1,7 @@
 """Generate the synthetic event log and its shuffled negative controls.
 
+The generated files are already included in data/synthetic/; run this only to regenerate them.
+
 Usage:
     python generate_data.py
     python generate_data.py --events 200 --seed 7 --output-directory data
@@ -10,11 +12,12 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from synthetic_data import ShuffleControls, SyntheticLogGenerator
-from synthetic_data.generator import GeneratorConfig
+from extensions.shuffle_controls import ShuffleControls
+from extensions.synthetic_log import GeneratorConfig, SyntheticLogGenerator
 
 
 def parse_arguments() -> argparse.Namespace:
+    """Command-line options for the size, seed, label noise and output folder."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--events", type=int, default=100,
                         help="exact number of events (default: 100); ignored when --cases is given")
@@ -32,7 +35,9 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Generate the synthetic log and its controls and write each to a CSV file."""
     arguments = parse_arguments()
+    # A fixed number of events, unless a number of cases is given.
     config = GeneratorConfig(target_events=None if arguments.cases else arguments.events,
                              number_of_cases=arguments.cases or 15, seed=arguments.seed,
                              label_noise=arguments.label_noise)

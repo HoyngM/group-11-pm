@@ -1,0 +1,35 @@
+flowchart TD
+    CLI["Start from the command line<br/><small>main.py: main()</small>"] --> Load["Read config.yaml and the command-line overrides<br/><small>main.py: Experiment.from_file / run</small>"]
+    Config["Datasets, strategies, importance and simulation settings<br/><small>config.yaml</small>"] --> Load
+
+    Load --> Datasets{"For every selected dataset<br/><small>Experiment._run_dataset</small>"}
+    Load --> Sims{"For every simulated scenario and repetition<br/><small>Experiment._run_simulations</small>"}
+
+    Datasets --> Log["Load and clean the CSV with pm4py: order by event_nr,<br/>clean activity names, drop cases with rare activities,<br/>allowed_locations per activity<br/><small>tools.py: DataManager._load_df</small>"]
+    Log --> Split["Stratified train/test split<br/>(for strategies with select_on: training_split)<br/><small>tools.py: DataManager.split_test_train</small>"]
+
+    Split --> Apriori["Apriori (mlxtend): every single activity<br/>+ top_k frequent itemsets<br/><small>tools.py: frequent_activity_sets<br/>extensions/itemset_selection.py: AprioriSelector</small>"]
+    Split --> Impressed["IMPresseD automatic mode: interests, Pareto front,<br/>extend by one event, repeat up to length 3<br/><small>auto_impid.py: auto_stepwise_ppd<br/>imipd.py: pattern_extension, single_pattern_extender,<br/>create_pattern_attributes</small>"]
+    Apriori --> Itemsets["Itemsets + details<br/><small>extensions/itemset_selection.py: SelectionResult</small>"]
+    Impressed --> Itemsets
+
+    Itemsets --> CV["k-fold CV: XGBoost on the index encoding,<br/>baseline weighted F1 on the training cases<br/><small>cross_validation_process_permutation.py<br/>tools.py: cross_split_test_train, index_encoding</small>"]
+    CV --> Permute["Move each itemset to other observed locations<br/>(n_repeats times); F1 drop = importance<br/><small>tools.py: trace_permutation_importance,<br/>itemset_permutation_importance, shuffle_sequence</small>"]
+    Permute --> Report["Tables and box plot per strategy<br/><small>plotting_results.py</small>"]
+    Report --> Summary["results/summary.csv<br/>results/&lt;dataset&gt;/..."]
+
+    Sims --> Generate["Generate a log with planted location and existence effects<br/><small>extensions/simulation.py</small>"]
+    Generate --> SimSelect["Run the strategies on it<br/><small>main.py: Experiment._select</small>"]
+    SimSelect --> Gold["Recall of the planted itemsets<br/><small>extensions/evaluation.py</small>"]
+    Gold --> SimSummary["results/simulated/summary_simulated_mean.csv"]
+
+    Data["Optional: regenerate data/synthetic/<br/><small>generate_data.py + extensions/synthetic_log.py,<br/>shuffle_controls.py</small>"] -.-> Datasets
+
+    classDef entry fill:#e1f5fe,stroke:#0277bd
+    classDef module fill:#f3e5f5,stroke:#7b1fa2
+    classDef data fill:#fff3e0,stroke:#ef6c00
+    classDef output fill:#e8f5e9,stroke:#2e7d32
+    class CLI,Data entry
+    class Load,Log,Split,Apriori,Impressed,CV,Permute,Report,Generate,SimSelect,Gold module
+    class Config,Itemsets data
+    class Summary,SimSummary output

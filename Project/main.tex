@@ -146,7 +146,39 @@ For every itemset, a distribution of F1 drops: how much the location of that ite
 \section{Implementation}
 % ============================================================
 
-\todo{Implementation: packages, structure and how to run (selection, model, location permutation).}
+\label{sec:implementation}
+
+The approach is implemented in Python~3. Structure and function names follow the code of the original authors~\cite{vazifehdoostirani2024,vazifehdoostirani2023}\footnote{\url{https://github.com/MozhganVD/PermutationLocationImportance} and \url{https://github.com/MozhganVD/InteractivePatternDetection}}, so that every reproduced step can be compared with the original; our additions are kept in a separate folder. One command, \texttt{python main.py}, runs all steps for all event logs, with the parameters read from a YAML configuration file. Table~\ref{tab:implementation} links the steps of Section~\ref{sec:approach} to the code.
+
+\begin{table}[H]
+    \centering
+    \caption{Implementation of the steps of the approach.}
+    \label{tab:implementation}
+    \small
+    \begin{tabular}{@{}p{3.6cm}p{6.6cm}p{4.4cm}@{}}
+        \toprule
+        Step & Module (main functions) & Libraries \\
+        \midrule
+        Loading and preprocessing & \texttt{tools.py} (\texttt{DataManager}) & pm4py, pandas \\
+        1. Baseline model & \texttt{cross\_validation\_process\_permutation.py}, \texttt{tools.py} (\texttt{index\_encoding}) & XGBoost, scikit-learn \\
+        2A. Apriori & \texttt{tools.py} (\texttt{frequent\_activity\_sets}) & mlxtend \\
+        2B. IMPresseD & \texttt{auto\_impid.py}, \texttt{imipd.py} & networkx, paretoset, scikit-learn, SciPy \\
+        3--4. Permutation, importance & \texttt{tools.py} (\texttt{shuffle\_sequence}, \texttt{trace/itemset\_permutation\_importance}) & NumPy, scikit-learn \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\paragraph{Event log and model.}
+The logs are loaded and filtered with pm4py~\cite{berti2019}. As in the original code, activity names are normalised and cases with an activity that occurs fewer than twice in the log are removed. The BPIC11 timestamps only record the date (87--89\% of consecutive events in a case share one), so the events are ordered by their event number. The index-based encoding is implemented as one binary feature per pair of position and activity. The model is XGBoost~\cite{chen2016} with default parameters, evaluated with stratified 5-fold cross-validation and the weighted F1-score (scikit-learn~\cite{pedregosa2011}).
+
+\paragraph{Itemset selection.}
+Strategy A applies the Apriori implementation of mlxtend to all cases. Strategy B ports the automatic mode of the IMPresseD tool: every trace is a chain graph, outcome interest is computed as mutual information, the distance between two cases is $(m \cdot \text{Jaccard} + \text{Euclidean}_{[0,1]})/(m+1)$ over $m$ categorical attributes and the min-max scaled numeric ones, and the Pareto front is computed with paretoset. As in the tool, patterns with an eventual relation are not extended further. We deviate from the tool in two places: the rule that adds a predecessor and a successor in one step is switched off, so that every step adds exactly one activity, and the case distance uses only the case attributes, as defined in the paper.
+
+\paragraph{Location permutation and importance.}
+An activity is moved to a random location at which it was observed; the activities of an itemset are moved one at a time, each to a location after the previous one, so that their order is kept. Every itemset and repetition starts from the original traces, and the F1 drop is measured on the held-out cases of each fold, with the test F1 of the fold as baseline. A single activity that is moved in fewer than three cases gets importance 0. Itemsets that contain an activity with a fixed location, i.e.\ always at the same position counted from the start or from the end of the trace (such as a start or end activity), are not permuted: their location cannot matter, and moving them would create unrealistic traces. These activities are detected from the log, not named by hand.
+
+\paragraph{Reproducibility.}
+All random steps are seeded, including the fold split. We first ported the authors' code literally and verified the port on the same data: it gives the same Apriori itemsets, the same permutations (355 of 355 for itemsets, 218 of 218 for single activities) and the same IMPresseD Pareto patterns. We then corrected three places where the original code deviates from the published method: it measured the F1 drop on the training cases, which the model has largely memorised; it never reset the permuted traces, so the importance of an itemset depended on the itemsets permuted before it; and a bookkeeping error in its shuffle moved a wrong event in 25 of the 355 BPIC11 permutations, breaking the order of the itemset in 9 of them. 30 unit tests cover the components.
 
 % ============================================================
 \section{Evaluation Design and Results}
