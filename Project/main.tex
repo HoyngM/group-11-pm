@@ -196,13 +196,11 @@ All random steps are seeded, including the fold split. We first ported the autho
 
 \subsection{Data}
 
-We use three groups of event logs, each for its own purpose (Table~\ref{tab:data}).
+\emph{BPIC11 f1--f3.} The main evaluation uses the three labelled hospital logs from the BPI Challenge 2011 that Vazifehdoostirani et al.~\cite{vazifehdoostirani2024} used, with the outcome labels of Teinemaa et al.~\cite{teinemaa2019} (Table~\ref{tab:data}). Each log defines the binary outcome with a different labelling rule on the activities of a case; in f1 the rule concerns the occurrence of activities, in f2 and f3 also their order. \todo{Check the exact rule per log in Teinemaa et al.\ and name the activities involved.} We take the logs as provided in the authors' repository and clean them as described in Section~\ref{sec:implementation}.
 
-\emph{BPIC11 f1--f3.} The main evaluation uses the three labelled hospital logs from the BPI Challenge 2011 that Vazifehdoostirani et al.~\cite{vazifehdoostirani2024} used, with the outcome labels of the benchmark of Teinemaa et al.~\cite{teinemaa2019}. Each log defines the binary outcome with a different labelling rule on the activities of a case; in f1 the rule concerns the occurrence of activities, in f2 and f3 also their order~\cite{teinemaa2019}. \todo{Check the exact rule per log in Teinemaa et al.\ and name the activities involved.} The traces are truncated at 36, 40 and 31 events. We take the logs as provided in the authors' repository and clean them as described in Section~\ref{sec:implementation}.
+\emph{Synthetic log and negative controls.} We built a small log of exactly 100 events (15 cases), the size agreed with the lecturer for a preliminary evaluation. Activity $B$ occurs in every case and only its location determines the label: an early $B$ gives label 0, a late $B$ label 1, with 10\% label noise. In the control \emph{shuffled within case} the events of each case are permuted, which removes the location effect; in \emph{shuffled outcomes} the labels are permuted over the cases, which removes every relation between trace and label.
 
-\emph{Synthetic log and negative controls.} To check that the importance step detects a location effect, we built a small log of exactly 100 events (15 cases), the size agreed with the lecturer for a preliminary evaluation. Activity $B$ occurs in every case and only its location determines the label: an early $B$ gives label 0, a late $B$ label 1, with 10\% label noise. Because $B$ is always present, its existence carries no information, and only a location-aware method can find it. Two negative controls are derived from this log: in \emph{shuffled within case} the events of each case are permuted, which removes the location effect, and in \emph{shuffled outcomes} the labels are permuted over the cases, which removes every relation between trace and label.
-
-\emph{Simulated logs.} To check that a selection strategy picks the itemsets that matter, we simulate logs of 1000 cases with 14 to 22 events, filled with 10 noise activities. Three effects are planted. Activity $x$ and the block $p\,q$ are placed early or late in the trace with equal probability; an early location raises the log-odds of a positive outcome by 2 and a late location lowers them by 2. The presence of activity $y$ raises the log-odds by 2 compared with its absence. In scenario \emph{rare pair} the block $p\,q$ occurs in 30\% of the cases, in \emph{frequent pair} in 60\%. Each scenario is simulated 10 times with different seeds.
+\emph{Simulated logs.} Logs of 1000 cases with 14 to 22 events, filled with 10 noise activities, with three planted effects. Activity $x$ and the block $p\,q$ are placed early or late in the trace with equal probability; an early location raises the log-odds of a positive outcome by 2 and a late location lowers them by 2. The presence of activity $y$ raises the log-odds by 2 compared with its absence. The block $p\,q$ occurs in 30\% of the cases in scenario \emph{rare pair} and in 60\% in \emph{frequent pair}; each scenario is simulated 10 times with different seeds.
 
 \begin{table}[H]
     \centering
@@ -224,7 +222,7 @@ We use three groups of event logs, each for its own purpose (Table~\ref{tab:data
 
 \subsection{Evaluation Design}
 
-The evaluation answers four questions. E1 and E2 test the two parts of the pipeline against a gold standard; E3 answers the question of the assignment; E4 tests the parameters of the baseline.
+The evaluation answers four questions.
 
 \begin{itemize}
     \item \textbf{E1, importance step.} Does permuting an activity whose location determines the outcome lower the F1-score clearly, while permutations in the controls leave it unchanged?
@@ -235,32 +233,32 @@ The evaluation answers four questions. E1 and E2 test the two parts of the pipel
 
 \paragraph{Gold standard.} In the synthetic and simulated logs we generate the labels ourselves, so we know which itemsets matter: $\{B\}$ in the synthetic log, nothing in the two controls, and $\{x\}$ and $\{p,q\}$ (location) in the simulated logs. $\{y\}$ is a distractor: its presence matters but its location does not, so a selection strategy may select it, but its location importance should be close to 0. All other activities are noise. For BPIC11 no complete ground truth exists, so there E3 compares the two strategies with each other instead of measuring accuracy. The labelling rules do give a partial expectation: the activities in the rule of a log, and in f2 and f3 their order, should come out as important.
 
-\paragraph{Metrics and settings.} All runs use the parameters of Table~\ref{tab:parameters}. Minimum support 0.5 and the top 10 are the defaults of the authors' code, pattern length 3 is set by the assignment, 5 folds and 10 repetitions follow the original paper, and IMPresseD selects on an 80\% split because its outcome interest uses the labels. The model is evaluated with the weighted F1-score on the held-out fold of a stratified 5-fold cross-validation. The folds are drawn from all cases, so about 80\% of each test fold was also used by the IMPresseD selection. \todo{Group decision (question 5 for Laura): repeat the selection inside each fold, or state this as a limitation and adjust the claim in Section~\ref{sec:approach}.} The importance of an itemset is the drop in this F1-score after permutation, which gives 50 values per itemset (5 folds $\times$ 10 repetitions); we report the mean and, as in the original paper, box plots. For E2 we measure the \emph{location recall} (share of $\{x\}$ and $\{p,q\}$ that is selected), the \emph{existence recall} (whether $\{y\}$ is selected) and the \emph{noise share} (share of the selected itemsets that consist of noise activities only). For E3 we compare the number and sizes of the itemsets, the Jaccard overlap of the itemsets with more than one activity, the overlap of the ten most important itemsets, the Spearman rank correlation of the importance of the itemsets that both strategies select, and the runtime. \todo{Top-10 overlap, Spearman and runtime are not computed on \texttt{main} yet: port them from branch \texttt{job/location-importance-comparison} or remove them here.}
+\paragraph{Metrics and settings.} All runs use the parameters of Table~\ref{tab:parameters}: minimum support 0.5 and the top 10 are the defaults of the authors' code, pattern length 3 is set by the assignment, and 5 folds and 10 repetitions follow the original paper. Every itemset gets 50 importance values (5 folds $\times$ 10 repetitions); we report the mean and, as in the original paper, box plots. The IMPresseD selection uses 80\% of the cases, but the folds are drawn from all cases, so about 80\% of each test fold was also used by the selection. \todo{Group decision (question 5 for Laura): repeat the selection inside each fold, or state this as a limitation and adjust the claim in Section~\ref{sec:approach}.} For E2 we measure the \emph{location recall} (share of $\{x\}$ and $\{p,q\}$ that is selected) and the \emph{existence recall} (whether $\{y\}$ is selected). For E3 we compare the number and sizes of the itemsets, the Jaccard overlap of the itemsets with more than one activity, the overlap of the ten most important itemsets, and the Spearman rank correlation of the importance of the itemsets that both strategies select. \todo{Top-10 overlap and Spearman are not computed on \texttt{main} yet: port them from branch \texttt{job/location-importance-comparison} or remove them here.}
 
 \subsection{Results}
 
-\paragraph{E1: the importance step detects a location effect.} The model reaches a test F1 of 0.65 on the synthetic log, against 0.39 and 0.42 on the two controls, so the location of $B$ can be learned and the controls carry no signal. $B$ is only tested in the itemsets of Apriori: IMPresseD does not select it, because a pattern that occurs once in every case says nothing about the outcome (E2). Permuting the location of $B$ lowers the F1-score by \tbd{} on average, while no itemset in the controls changes it by more than \tbd{}. With 15 cases each test fold holds only three cases, so E1 is a sanity check rather than a precise measurement. Because a single activity that is moved in fewer than three cases gets importance 0 (Section~\ref{sec:implementation}), every single activity that is missing from one of the three test cases gets 0 by construction, which makes the controls look cleaner than they are. \todo{Consider a larger synthetic log for E1.}
+\paragraph{E1: the importance step detects a location effect.} The model reaches a test F1 of 0.65 on the synthetic log, against 0.39 and 0.42 on the two controls, so the location of $B$ can be learned and the controls carry no signal. $B$ is only tested via Apriori, because IMPresseD does not select it (E2). Permuting the location of $B$ lowers the F1-score by \tbd{} on average, while no itemset in the controls changes it by more than \tbd{}. With 15 cases each test fold holds only three cases, and the minimum of three moved cases (Section~\ref{sec:implementation}) sets many values in the controls to 0 by construction, so E1 is a sanity check rather than a precise measurement. \todo{Consider a larger synthetic log for E1.}
 
-\paragraph{E2: neither strategy selects a pair whose location matters.} Table~\ref{tab:gold} compares the selected itemsets with the gold standard. Both strategies select the distractor $\{y\}$ in every log, which is expected, since its presence matters. Apriori always selects $\{x\}$, because it keeps every single activity; IMPresseD misses it in 2 of the 10 rare-pair logs. No strategy selects $\{p,q\}$ in any log. This failure follows from the selection criteria. Apriori ranks itemsets by frequency. Its top 10 is filled with itemsets that contain the start or end activity, which occur in every case (support 0.75 or higher), so $\{p,q\}$ (support about 0.60) is not selected, even in the frequent-pair scenario where it passes the minimum support. Because the start and end activities have a fixed location, these ten itemsets would then be left out of the permutation (Section~\ref{sec:implementation}), so none of the multi-activity itemsets of Apriori would be tested. IMPresseD scores a pattern on how much the number of times it occurs in a case says about the outcome, together with its frequency and case distance. Because $p$ and $q$ are placed early or late with equal probability, their occurrence says almost nothing about the outcome, and neither of them is on the Pareto front of the single activities. Patterns are only extended from that front, so the pattern $p \to q$ is never generated. The same holds for $x$, which explains why IMPresseD sometimes misses it, and for $B$ in the synthetic log (E1). In short, both strategies select on existence, while the method is meant to find location effects (Section~\ref{sec:limitations}). IMPresseD may for the same reason miss the lactic acid measurement of the use case in Section~1, whose presence says little but whose location matters. Apriori does test it, because it keeps every single activity, but it has the same blind spot for itemsets of two or more activities. IMPresseD selects fewer noise itemsets than Apriori (50\% against 73\%), but this difference mainly reflects that Apriori keeps every single activity by design, including all twelve noise activities; it does not show that IMPresseD selects the planted itemsets better.
+\paragraph{E2: neither strategy selects a pair whose location matters.} Table~\ref{tab:gold} compares the selected itemsets with the gold standard. Both strategies select the distractor $\{y\}$ in every log, as expected, since its presence matters. Apriori always selects $\{x\}$, because it keeps every single activity; IMPresseD misses it in 2 of the 10 rare-pair logs. No strategy selects $\{p,q\}$ in any log. This failure follows from the selection criteria. Apriori ranks itemsets by frequency, and its top 10 is filled with itemsets that contain the start or end activity, which occur in every case (support 0.75 or higher); $\{p,q\}$ (support about 0.60) is not selected, even in the frequent-pair scenario where it passes the minimum support. IMPresseD scores a pattern on how much the number of times it occurs in a case says about the outcome, together with its frequency and case distance. Because $p$ and $q$ are placed early or late with equal probability, their occurrence says almost nothing about the outcome, so neither is on the Pareto front of the single activities; patterns are only extended from that front, so $p \to q$ is never generated. The same explains why IMPresseD sometimes misses $x$, and why it does not select $B$, which occurs once in every case of the synthetic log. Both strategies thus select on existence, while the method is meant to find location effects (Section~\ref{sec:limitations}).
 
 \begin{table}[H]
     \centering
-    \caption{Selection on the simulated logs against the gold standard: number of logs (of 10) in which a planted itemset is selected, and the noise share (mean over the 10 logs).}
+    \caption{Selection on the simulated logs against the gold standard: number of logs (of 10) in which a planted itemset is selected.}
     \label{tab:gold}
     \small
-    \begin{tabular}{@{}llcccc@{}}
+    \begin{tabular}{@{}llccc@{}}
         \toprule
-        Scenario & Strategy & $\{x\}$ (location) & $\{p,q\}$ (location) & $\{y\}$ (distractor) & Noise share \\
+        Scenario & Strategy & $\{x\}$ (location) & $\{p,q\}$ (location) & $\{y\}$ (distractor) \\
         \midrule
-        Rare pair & Apriori & 10 & 0 & 10 & 0.73 \\
-         & IMPresseD & 8 & 0 & 10 & 0.51 \\
-        Frequent pair & Apriori & 10 & 0 & 10 & 0.73 \\
-         & IMPresseD & 10 & 0 & 10 & 0.50 \\
+        Rare pair & Apriori & 10 & 0 & 10 \\
+         & IMPresseD & 8 & 0 & 10 \\
+        Frequent pair & Apriori & 10 & 0 & 10 \\
+         & IMPresseD & 10 & 0 & 10 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-\paragraph{E3: Apriori and IMPresseD test different itemsets.} The XGBoost model reaches a training F1 of 0.99 on all three logs and a test F1 of 0.91 (f1), 0.90 (f2) and 0.93 (f3). The gap shows that the model largely memorises the training cases, which is why we measure the importance on the held-out folds (Section~\ref{sec:implementation}). Table~\ref{tab:selection} shows that the two strategies select very different itemsets. Apriori selects every single activity plus at most ten frequent itemsets; in f3 only five itemsets reach the minimum support of 0.5. Of these, the three to five rare activities with a fixed location are not permuted. IMPresseD keeps only the 18 to 35 single activities that are Pareto-optimal, and adds 120 to 141 itemsets of two or three activities, which come from a larger number of patterns, since patterns that differ only in order give the same itemset. The multi-activity itemsets of the two strategies hardly overlap (Jaccard 0.00 to 0.02), so the two strategies test largely different hypotheses about which locations matter.
+\paragraph{E3: Apriori and IMPresseD test different itemsets.} The XGBoost model reaches a training F1 of 0.99 on all three logs and a test F1 of 0.91 (f1), 0.90 (f2) and 0.93 (f3); it largely memorises the training cases, which is why the importance is measured on the held-out folds (Section~\ref{sec:implementation}). Table~\ref{tab:selection} shows that Apriori selects mostly single activities, because it keeps all of them and adds at most ten frequent itemsets, while IMPresseD selects mostly itemsets of two or three activities. The multi-activity itemsets of the two strategies hardly overlap, so the two strategies test largely different hypotheses about which locations matter.
 
 \begin{table}[H]
     \centering
@@ -285,8 +283,6 @@ The evaluation answers four questions. E1 and E2 test the two parts of the pipel
 
 \todo{Compare with the original paper: do we find its most important itemsets again (e.g.\ ac370000 and \{ac370000, ac370419\} in f1), and if not, is that explained by our three corrections (Section~\ref{sec:implementation})?}
 
-Runtime per log: \tbd{} for Apriori and \tbd{} for IMPresseD; almost all of it is spent in the importance step, not in the selection.
-
 \begin{figure}[H]
     \centering
     \fbox{\parbox[c][3.5cm][c]{0.9\textwidth}{\centering\textcolor{red}{Placeholder: box plots of the F1 drop of the ten most important itemsets of Apriori and IMPresseD side by side, for BPIC11 f2.}}}
@@ -294,7 +290,7 @@ Runtime per log: \tbd{} for Apriori and \tbd{} for IMPresseD; almost all of it i
     \label{fig:importance}
 \end{figure}
 
-\paragraph{E4: sensitivity of the baseline.} Only the parameters of Apriori are varied. IMPresseD has no threshold to set: the Pareto front replaces it, and the pattern length is fixed by the assignment. \todo{Report how the number of itemsets and the most important itemsets change with minimum support 0.2 and the top 25 itemsets. If the full run is not feasible, report only the selection.}
+\paragraph{E4: sensitivity of the baseline.} Only the parameters of Apriori are varied. \todo{Report how the number of itemsets and the most important itemsets change with minimum support 0.2 and the top 25 itemsets. If the full run is not feasible, report only the selection.}
 
 % ============================================================
 \section{Limitations and Future Work}
@@ -302,7 +298,7 @@ Runtime per log: \tbd{} for Apriori and \tbd{} for IMPresseD; almost all of it i
 % ============================================================
 
 \paragraph{Limitations.}
-\todo{Limitations of the approach and of the evaluation.}
+\todo{Limitations of the approach and of the evaluation. Include from E2: selection on existence can miss location effects; e.g.\ IMPresseD may miss the lactic acid measurement of the use case in Section~1, whose presence says little but whose location matters, and Apriori has the same blind spot for itemsets of two or more activities.}
 
 \paragraph{Future work.}
 \todo{Improvement directions.}
